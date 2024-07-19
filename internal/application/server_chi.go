@@ -62,6 +62,7 @@ func (s *ServerChi) Run() (err error) {
 	router.Route("/api/v1", func(r chi.Router) {
 		buildUserRouter(&r, db)
 		buildEventRouter(&r, db)
+		buildPrizeRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -90,6 +91,20 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewEventDefault(sv)
 
 	(*router).Route("/events", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetById())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildPrizeRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewPrizeSqlite(db)
+	sv := service.NewPrizeDefault(rp)
+	hd := handler.NewPrizeDefault(sv)
+
+	(*router).Route("/prizes", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetById())
 		rt.Post("/", hd.Create())
