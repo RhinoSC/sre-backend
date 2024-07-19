@@ -2,10 +2,18 @@ package internal
 
 import "errors"
 
+type UserSocials struct {
+	Twitch   string
+	Twitter  string
+	Youtube  string
+	Facebook string
+}
+
 type User struct {
 	ID       string
 	Name     string
 	Username string
+	UserSocials
 }
 
 var (
@@ -14,15 +22,16 @@ var (
 	ErrUserRepositoryDuplicated = errors.New("repository: user already exists")
 	// SERVICE ERRORS
 	ErrUserDatabase          = errors.New("database error")
+	ErrUserServiceNotFound   = errors.New("service: user not found")
 	ErrUserServiceDuplicated = errors.New("service: user already exists")
 )
 
 type UserRepository interface {
 	FindAll() ([]User, error)
 
-	// FindById() (User, error)
+	FindById(id string) (User, error)
 
-	// FindByUsername() (User, error)
+	FindByUsername(username string) (User, error)
 
 	// Save(user *User) error
 
@@ -34,9 +43,9 @@ type UserRepository interface {
 type UserService interface {
 	FindAll() ([]User, error)
 
-	// FindById() (User, error)
+	FindById(id string) (User, error)
 
-	// FindByUsername() (User, error)
+	FindByUsername(username string) (User, error)
 
 	// Save(user *User) error
 
