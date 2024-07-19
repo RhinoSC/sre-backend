@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/sirupsen/logrus"
 
 	"github.com/RhinoSC/sre-backend/internal/handler"
+	"github.com/RhinoSC/sre-backend/internal/logger"
 )
 
 type ConfigServerChi struct {
@@ -48,8 +48,7 @@ func (s *ServerChi) Run() (err error) {
 	}
 
 	// initialize logger
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logrus.SetLevel(logrus.InfoLevel)
+	logger.InitializeLogger()
 
 	router := chi.NewRouter()
 
