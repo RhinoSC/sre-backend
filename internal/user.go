@@ -33,7 +33,7 @@ type UserRepository interface {
 
 	FindByUsername(username string) (User, error)
 
-	// Save(user *User) error
+	Save(user *User) error
 
 	// Update(user *User) error
 
@@ -47,7 +47,7 @@ type UserService interface {
 
 	FindByUsername(username string) (User, error)
 
-	// Save(user *User) error
+	Save(user *User) error
 
 	// Update(user *User) error
 

@@ -53,3 +53,18 @@ func (s *UserDefault) FindByUsername(username string) (user internal.User, err e
 	}
 	return
 }
+
+func (s *UserDefault) Save(user *internal.User) (err error) {
+	err = s.rp.Save(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, internal.ErrUserRepositoryDuplicated):
+			err = fmt.Errorf("error saving user: %w", internal.ErrUserServiceDuplicated)
+		default:
+			err = fmt.Errorf("error saving user: %w", err)
+		}
+		return
+	}
+
+	return
+}

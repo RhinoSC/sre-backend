@@ -2,9 +2,11 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/logger"
+	"github.com/mattn/go-sqlite3"
 )
 
 type UserSqlite struct {
@@ -55,6 +57,7 @@ func (r *UserSqlite) FindById(id string) (user internal.User, err error) {
 	}
 	return
 }
+
 func (r *UserSqlite) FindByUsername(username string) (user internal.User, err error) {
 	row := r.db.QueryRow("SELECT u.`id`, u.`name`, u.`username`, um.`twitch`, um.`twitter`, um.`youtube`, um.`facebook` FROM `users` AS `u` JOIN user_socials AS `um` ON u.`id` = um.`user_id` WHERE u.`username` == ?;", username)
 
@@ -66,5 +69,39 @@ func (r *UserSqlite) FindByUsername(username string) (user internal.User, err er
 		logger.Log.Error(err.Error())
 		return
 	}
+	return
+}
+
+func (r *UserSqlite) Save(user *internal.User) (err error) {
+	_, err = r.db.Exec("INSERT INTO `users` (`id`, `name`, `username`) VALUES (?, ?, ?)", user.ID, user.Name, user.Username)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.ExtendedCode {
+			case sqlite3.ErrConstraintUnique:
+				err = internal.ErrUserRepositoryDuplicated
+			default:
+				return
+			}
+			logger.Log.Error(err.Error())
+			return
+		}
+	}
+
+	_, err = r.db.Exec("INSERT INTO `user_socials` (`id`, `user_id`, `twitch`, `twitter`, `youtube`, `facebook`) VALUES (?, ?, ?, ?, ?, ?)", user.ID, user.ID, user.UserSocials.Twitch, user.UserSocials.Twitter, user.UserSocials.Youtube, user.UserSocials.Facebook)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.ExtendedCode {
+			case sqlite3.ErrConstraintUnique:
+				err = internal.ErrUserRepositoryDuplicated
+			default:
+				return
+			}
+			logger.Log.Error(err.Error())
+			return
+		}
+	}
+
 	return
 }
