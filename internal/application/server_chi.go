@@ -79,5 +79,6 @@ func buildUserRouter(router *chi.Router, db *sql.DB) {
 		rt.Get("/username/{username}", hd.GetByUsername())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
 	})
 }

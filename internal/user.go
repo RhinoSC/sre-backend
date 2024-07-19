@@ -37,7 +37,7 @@ type UserRepository interface {
 
 	Update(user *User) error
 
-	// Delete(id string) error
+	Delete(id string) error
 }
 
 type UserService interface {
@@ -51,5 +51,5 @@ type UserService interface {
 
 	Update(user *User) error
 
-	// Delete(id string) error
+	Delete(id string) error
 }

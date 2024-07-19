@@ -313,3 +313,29 @@ func (h *UserDefault) Update() http.HandlerFunc {
 		})
 	}
 }
+
+func (h *UserDefault) Delete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+		}
+		// process
+
+		err := h.sv.Delete(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrUserServiceNotFound):
+				util.ResponseError(w, http.StatusNotFound, "User not found")
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		// response
+
+		util.ResponseJSON(w, http.StatusNoContent, map[string]any{})
+	}
+}

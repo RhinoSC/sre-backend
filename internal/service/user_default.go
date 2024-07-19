@@ -82,3 +82,17 @@ func (s *UserDefault) Update(user *internal.User) (err error) {
 	}
 	return
 }
+
+func (s *UserDefault) Delete(id string) (err error) {
+	err = s.rp.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, internal.ErrUserRepositoryNotFound):
+			err = fmt.Errorf("error deleting user: %w", internal.ErrUserServiceNotFound)
+		default:
+			err = fmt.Errorf("error deleting user: %w", err)
+		}
+		return
+	}
+	return
+}

@@ -138,3 +138,23 @@ func (r *UserSqlite) Update(user *internal.User) (err error) {
 	}
 	return
 }
+
+func (r *UserSqlite) Delete(id string) (err error) {
+	res, err := r.db.Exec("DELETE FROM `users` WHERE `id` = ?", id)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		logger.Log.Error(err.Error())
+	}
+
+	if rowsAffected == 0 {
+		err = internal.ErrUserRepositoryNotFound
+		return
+	}
+
+	return
+}
