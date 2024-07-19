@@ -61,6 +61,7 @@ func (s *ServerChi) Run() (err error) {
 
 	router.Route("/api/v1", func(r chi.Router) {
 		buildUserRouter(&r, db)
+		buildEventRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -77,6 +78,20 @@ func buildUserRouter(router *chi.Router, db *sql.DB) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetById())
 		rt.Get("/username/{username}", hd.GetByUsername())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildEventRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewEventSqlite(db)
+	sv := service.NewEventDefault(rp)
+	hd := handler.NewEventDefault(sv)
+
+	(*router).Route("/events", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetById())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())
