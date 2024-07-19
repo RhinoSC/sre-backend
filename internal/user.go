@@ -3,7 +3,7 @@ package internal
 import "errors"
 
 type User struct {
-	ID       int
+	ID       string
 	Name     string
 	Username string
 }
@@ -20,27 +20,27 @@ var (
 type UserRepository interface {
 	FindAll() ([]User, error)
 
-	FindById() (User, error)
+	// FindById() (User, error)
 
-	FindByUsername() (User, error)
+	// FindByUsername() (User, error)
 
-	Save(user *User) error
+	// Save(user *User) error
 
-	Update(user *User) error
+	// Update(user *User) error
 
-	Delete(id string) error
+	// Delete(id string) error
 }
 
 type UserService interface {
 	FindAll() ([]User, error)
 
-	FindById() (User, error)
+	// FindById() (User, error)
 
-	FindByUsername() (User, error)
+	// FindByUsername() (User, error)
 
-	Save(user *User) error
+	// Save(user *User) error
 
-	Update(user *User) error
+	// Update(user *User) error
 
-	Delete(id string) error
+	// Delete(id string) error
 }

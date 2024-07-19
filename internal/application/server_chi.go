@@ -10,6 +10,8 @@ import (
 
 	"github.com/RhinoSC/sre-backend/internal/handler"
 	"github.com/RhinoSC/sre-backend/internal/logger"
+	"github.com/RhinoSC/sre-backend/internal/repository"
+	"github.com/RhinoSC/sre-backend/internal/service"
 )
 
 type ConfigServerChi struct {
@@ -36,7 +38,7 @@ func NewServerChi(cfg ConfigServerChi) *ServerChi {
 }
 
 func (s *ServerChi) Run() (err error) {
-	db, err := sql.Open("sqlite3", "./database.db")
+	db, err := sql.Open("sqlite3", "./database.db?foreign_keys=")
 	if err != nil {
 		return
 	}
@@ -57,7 +59,21 @@ func (s *ServerChi) Run() (err error) {
 
 	router.Get("/ping", handler.PingHandler())
 
+	router.Route("/api/v1", func(r chi.Router) {
+		buildUserRouter(&r, db)
+	})
+
 	err = http.ListenAndServe(s.address, router)
 
 	return
+}
+
+func buildUserRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewUserSqlite(db)
+	sv := service.NewUserDefault(rp)
+	hd := handler.NewUserDefault(sv)
+
+	(*router).Route("/users", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+	})
 }
