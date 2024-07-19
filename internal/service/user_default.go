@@ -68,3 +68,17 @@ func (s *UserDefault) Save(user *internal.User) (err error) {
 
 	return
 }
+
+func (s *UserDefault) Update(user *internal.User) (err error) {
+	err = s.rp.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, internal.ErrUserRepositoryDuplicated):
+			err = fmt.Errorf("error updating user: %w", internal.ErrUserServiceDuplicated)
+		default:
+			err = fmt.Errorf("error updating user: %w", err)
+		}
+		return
+	}
+	return
+}

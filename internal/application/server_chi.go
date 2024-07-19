@@ -78,5 +78,6 @@ func buildUserRouter(router *chi.Router, db *sql.DB) {
 		rt.Get("/{id}", hd.GetById())
 		rt.Get("/username/{username}", hd.GetByUsername())
 		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
 	})
 }

@@ -105,3 +105,36 @@ func (r *UserSqlite) Save(user *internal.User) (err error) {
 
 	return
 }
+
+func (r *UserSqlite) Update(user *internal.User) (err error) {
+	_, err = r.db.Exec("UPDATE `users` SET `name` = ?, `username` = ? WHERE `id` = ?;", user.Name, user.Username, user.ID)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.ExtendedCode {
+			case sqlite3.ErrConstraintUnique:
+				err = internal.ErrUserRepositoryDuplicated
+			default:
+				return
+			}
+			logger.Log.Error(err.Error())
+			return
+		}
+	}
+
+	_, err = r.db.Exec("UPDATE `user_socials` SET `twitch` = ?, `twitter` = ?, `youtube` = ?, `facebook` = ? WHERE `user_id` = ?;", user.UserSocials.Twitch, user.UserSocials.Twitter, user.UserSocials.Youtube, user.UserSocials.Facebook, user.ID)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.ExtendedCode {
+			case sqlite3.ErrConstraintUnique:
+				err = internal.ErrUserRepositoryDuplicated
+			default:
+				return
+			}
+			logger.Log.Error(err.Error())
+			return
+		}
+	}
+	return
+}

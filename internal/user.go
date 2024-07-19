@@ -35,7 +35,7 @@ type UserRepository interface {
 
 	Save(user *User) error
 
-	// Update(user *User) error
+	Update(user *User) error
 
 	// Delete(id string) error
 }
@@ -49,7 +49,7 @@ type UserService interface {
 
 	Save(user *User) error
 
-	// Update(user *User) error
+	Update(user *User) error
 
 	// Delete(id string) error
 }

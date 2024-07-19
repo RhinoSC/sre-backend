@@ -232,3 +232,84 @@ func (h *UserDefault) Create() http.HandlerFunc {
 		})
 	}
 }
+
+func (h *UserDefault) Update() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+		}
+
+		// process
+		user, err := h.sv.FindById(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrUserServiceNotFound):
+				util.ResponseError(w, http.StatusNotFound, "User not found")
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		userBody := UserAsJSON{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Socials: UserSocialsAsJSON{
+				Twitch:   user.UserSocials.Twitch,
+				Twitter:  user.UserSocials.Twitter,
+				Youtube:  user.UserSocials.Youtube,
+				Facebook: user.UserSocials.Facebook,
+			},
+		}
+
+		if err := util.RequestJSON(r, &userBody); err != nil {
+			util.ResponseError(w, http.StatusUnprocessableEntity, "Invalid body")
+			return
+		}
+
+		user = internal.User{
+			ID:       userBody.ID,
+			Name:     userBody.Name,
+			Username: user.Username,
+			UserSocials: internal.UserSocials{
+				Twitch:   userBody.Socials.Twitch,
+				Twitter:  userBody.Socials.Twitter,
+				Youtube:  userBody.Socials.Youtube,
+				Facebook: userBody.Socials.Facebook,
+			},
+		}
+
+		err = h.sv.Update(&user)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrUserServiceDuplicated):
+				util.ResponseError(w, http.StatusConflict, "User already exists")
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		// response
+
+		data := UserAsJSON{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Socials: UserSocialsAsJSON{
+				Twitch:   user.UserSocials.Twitch,
+				Twitter:  user.UserSocials.Twitter,
+				Youtube:  user.UserSocials.Youtube,
+				Facebook: user.UserSocials.Facebook,
+			},
+		}
+
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}
