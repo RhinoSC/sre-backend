@@ -43,7 +43,7 @@ func (s *ServerChi) Run() (err error) {
 	// workingDir, err := os.Getwd()
 	// rootDir := filepath.Join(workingDir, "../../")
 	rootDir := "C:/Users/rhino/OneDrive/Escritorio/SREX/backend/"
-	filePath := filepath.Join(rootDir, "database.db")
+	filePath := filepath.Join(rootDir, "database.db?_foreign_keys=on")
 
 	db, err := sql.Open("sqlite3", filePath)
 	if err != nil {

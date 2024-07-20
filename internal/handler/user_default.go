@@ -14,6 +14,7 @@ import (
 )
 
 type UserSocialsAsJSON struct {
+	ID       string `json:"id"`
 	Twitch   string `json:"twitch" validate:"required"`
 	Twitter  string `json:"twitter"`
 	Youtube  string `json:"youtube"`
@@ -64,6 +65,7 @@ func (h *UserDefault) GetAll() http.HandlerFunc {
 				Name:     user.Name,
 				Username: user.Username,
 				Socials: UserSocialsAsJSON{
+					ID:       user.UserSocials.ID,
 					Twitch:   user.UserSocials.Twitch,
 					Twitter:  user.UserSocials.Twitter,
 					Youtube:  user.UserSocials.Youtube,
@@ -105,6 +107,7 @@ func (h *UserDefault) GetByID() http.HandlerFunc {
 			Name:     user.Name,
 			Username: user.Username,
 			Socials: UserSocialsAsJSON{
+				ID:       user.UserSocials.ID,
 				Twitch:   user.UserSocials.Twitch,
 				Twitter:  user.UserSocials.Twitter,
 				Youtube:  user.UserSocials.Youtube,
@@ -144,6 +147,7 @@ func (h *UserDefault) GetByUsername() http.HandlerFunc {
 			Name:     user.Name,
 			Username: user.Username,
 			Socials: UserSocialsAsJSON{
+				ID:       user.UserSocials.ID,
 				Twitch:   user.UserSocials.Twitch,
 				Twitter:  user.UserSocials.Twitter,
 				Youtube:  user.UserSocials.Youtube,
@@ -195,6 +199,7 @@ func (h *UserDefault) Create() http.HandlerFunc {
 			Name:     body.Name,
 			Username: body.Username,
 			UserSocials: internal.UserSocials{
+				ID:       uuid.NewString(),
 				Twitch:   body.Socials.Twitch,
 				Twitter:  body.Socials.Twitter,
 				Youtube:  body.Socials.Youtube,
@@ -220,6 +225,7 @@ func (h *UserDefault) Create() http.HandlerFunc {
 			Name:     user.Name,
 			Username: user.Username,
 			Socials: UserSocialsAsJSON{
+				ID:       user.UserSocials.ID,
 				Twitch:   user.UserSocials.Twitch,
 				Twitter:  user.UserSocials.Twitter,
 				Youtube:  user.UserSocials.Youtube,
@@ -259,6 +265,7 @@ func (h *UserDefault) Update() http.HandlerFunc {
 			Name:     user.Name,
 			Username: user.Username,
 			Socials: UserSocialsAsJSON{
+				ID:       user.UserSocials.ID,
 				Twitch:   user.UserSocials.Twitch,
 				Twitter:  user.UserSocials.Twitter,
 				Youtube:  user.UserSocials.Youtube,
@@ -276,6 +283,7 @@ func (h *UserDefault) Update() http.HandlerFunc {
 			Name:     userBody.Name,
 			Username: user.Username,
 			UserSocials: internal.UserSocials{
+				ID:       userBody.Socials.ID,
 				Twitch:   userBody.Socials.Twitch,
 				Twitter:  userBody.Socials.Twitter,
 				Youtube:  userBody.Socials.Youtube,
@@ -301,6 +309,7 @@ func (h *UserDefault) Update() http.HandlerFunc {
 			Name:     user.Name,
 			Username: user.Username,
 			Socials: UserSocialsAsJSON{
+				ID:       user.UserSocials.ID,
 				Twitch:   user.UserSocials.Twitch,
 				Twitter:  user.UserSocials.Twitter,
 				Youtube:  user.UserSocials.Youtube,
