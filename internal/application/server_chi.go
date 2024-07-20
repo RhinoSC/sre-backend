@@ -65,6 +65,7 @@ func (s *ServerChi) Run() (err error) {
 		buildPrizeRouter(&r, db)
 		buildScheduleRouter(&r, db)
 		buildRunRouter(&r, db)
+		buildTeamRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -79,7 +80,7 @@ func buildUserRouter(router *chi.Router, db *sql.DB) {
 
 	(*router).Route("/users", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetById())
+		rt.Get("/{id}", hd.GetByID())
 		rt.Get("/username/{username}", hd.GetByUsername())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
@@ -94,7 +95,7 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 
 	(*router).Route("/events", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetById())
+		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())
@@ -108,7 +109,7 @@ func buildPrizeRouter(router *chi.Router, db *sql.DB) {
 
 	(*router).Route("/prizes", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetById())
+		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())
@@ -122,7 +123,7 @@ func buildScheduleRouter(router *chi.Router, db *sql.DB) {
 
 	(*router).Route("/schedules", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetById())
+		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())
@@ -135,6 +136,20 @@ func buildRunRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewRunDefault(sv)
 
 	(*router).Route("/runs", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetByID())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildTeamRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewTeamSqlite(db)
+	sv := service.NewTeamDefault(rp)
+	hd := handler.NewTeamDefault(sv)
+
+	(*router).Route("/teams", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())

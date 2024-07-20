@@ -79,7 +79,7 @@ func (h *UserDefault) GetAll() http.HandlerFunc {
 	}
 }
 
-func (h *UserDefault) GetById() http.HandlerFunc {
+func (h *UserDefault) GetByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 		id := chi.URLParam(r, "id")

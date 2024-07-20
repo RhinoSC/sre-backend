@@ -67,7 +67,7 @@ func (h *EventDefault) GetAll() http.HandlerFunc {
 	}
 }
 
-func (h *EventDefault) GetById() http.HandlerFunc {
+func (h *EventDefault) GetByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 		id := chi.URLParam(r, "id")
