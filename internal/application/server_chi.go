@@ -3,6 +3,7 @@ package application
 import (
 	"database/sql"
 	"net/http"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -38,7 +39,13 @@ func NewServerChi(cfg ConfigServerChi) *ServerChi {
 }
 
 func (s *ServerChi) Run() (err error) {
-	db, err := sql.Open("sqlite3", "./database.db?foreign_keys=")
+
+	// workingDir, err := os.Getwd()
+	// rootDir := filepath.Join(workingDir, "../../")
+	rootDir := "C:/Users/rhino/OneDrive/Escritorio/SREX/backend/"
+	filePath := filepath.Join(rootDir, "database.db")
+
+	db, err := sql.Open("sqlite3", filePath)
 	if err != nil {
 		return
 	}
@@ -66,6 +73,7 @@ func (s *ServerChi) Run() (err error) {
 		buildScheduleRouter(&r, db)
 		buildRunRouter(&r, db)
 		buildTeamRouter(&r, db)
+		buildBidRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -150,6 +158,20 @@ func buildTeamRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewTeamDefault(sv)
 
 	(*router).Route("/teams", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetByID())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildBidRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewBidSqlite(db)
+	sv := service.NewBidDefault(rp)
+	hd := handler.NewBidDefault(sv)
+
+	(*router).Route("/bids", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())
