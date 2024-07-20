@@ -70,7 +70,7 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 	}
 }
 
-func (h *ScheduleDefault) GetById() http.HandlerFunc {
+func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 		id := chi.URLParam(r, "id")
