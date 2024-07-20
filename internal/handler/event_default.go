@@ -73,6 +73,7 @@ func (h *EventDefault) GetById() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 		event, err := h.sv.FindById(id)
@@ -173,6 +174,7 @@ func (h *EventDefault) Update() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 
 		// process
@@ -239,6 +241,7 @@ func (h *EventDefault) Delete() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 

@@ -85,6 +85,7 @@ func (h *PrizeDefault) GetById() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 		prize, err := h.sv.FindById(id)
@@ -197,6 +198,7 @@ func (h *PrizeDefault) Update() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 
 		// process
@@ -275,6 +277,7 @@ func (h *PrizeDefault) Delete() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 
