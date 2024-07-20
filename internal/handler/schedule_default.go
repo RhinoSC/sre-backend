@@ -76,6 +76,7 @@ func (h *ScheduleDefault) GetById() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 		schedule, err := h.sv.FindById(id)
@@ -179,6 +180,7 @@ func (h *ScheduleDefault) Update() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 
 		// process
@@ -248,6 +250,7 @@ func (h *ScheduleDefault) Delete() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 
