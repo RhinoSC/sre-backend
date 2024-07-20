@@ -20,9 +20,9 @@ INSERT INTO teams (id, name) VALUES
 ('team4', 'Team Delta');
 
 -- Insertar datos de prueba en la tabla runs
-INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_milliseconds, metadata, schedule_id) VALUES
-('run1', 'Speedrun 1', 1000, '2h', 7200000, 'Metadata for Run 1', 'schedule1'),
-('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 'Metadata for Run 2', 'schedule2');
+INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, schedule_id) VALUES
+('run1', 'Speedrun 1', 1000, '2h', 7200000, 'schedule1'),
+('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 'schedule2');
 
 -- Insertar datos de prueba en la tabla run_metadata
 INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, run_name, note) VALUES

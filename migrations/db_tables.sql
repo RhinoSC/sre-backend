@@ -52,8 +52,7 @@ CREATE TABLE runs (
     `name` VARCHAR(255) NOT NULL,
     start_time_mili NUMERIC NOT NULL,
     estimate_string VARCHAR(255),
-    estimate_milliseconds NUMERIC,
-    metadata TEXT,
+    estimate_mili NUMERIC,
     schedule_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
 );
