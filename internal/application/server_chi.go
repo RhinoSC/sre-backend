@@ -64,6 +64,7 @@ func (s *ServerChi) Run() (err error) {
 		buildEventRouter(&r, db)
 		buildPrizeRouter(&r, db)
 		buildScheduleRouter(&r, db)
+		buildRunRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -122,6 +123,20 @@ func buildScheduleRouter(router *chi.Router, db *sql.DB) {
 	(*router).Route("/schedules", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetById())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildRunRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewRunSqlite(db)
+	sv := service.NewRunDefault(rp)
+	hd := handler.NewRunDefault(sv)
+
+	(*router).Route("/runs", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetByID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())

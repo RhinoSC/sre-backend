@@ -85,6 +85,7 @@ func (h *UserDefault) GetById() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 		// process
 		user, err := h.sv.FindById(id)
