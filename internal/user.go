@@ -3,6 +3,7 @@ package internal
 import "errors"
 
 type UserSocials struct {
+	ID       string
 	Twitch   string
 	Twitter  string
 	Youtube  string
