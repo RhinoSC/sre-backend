@@ -41,24 +41,33 @@ INSERT INTO players (team_id, user_id) VALUES
 
 -- Insertar datos de prueba en la tabla bids
 INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, run_id) VALUES
-('bid1', 'Bid 1', 100, 50, 'Description for Bid 1', 'bidwar', true, 'run1'),
-('bid2', 'Bid 2', 200, 100, 'Description for Bid 2', 'total', false, 'run2');
+('bid1', 'Bid 1', 60, 60, 'Description for Bid 1', 'bidwar', true, 'run1'),
+('bid2', 'Bid 2', 200, 70, 'Description for Bid 2', 'total', false, 'run2'),
+('bid3', 'Bid 3', 200, 80, 'Description for Bid 3', 'goal', false, 'run1');
 
 -- Insertar datos de prueba en la tabla bid_options
 INSERT INTO bid_options (id, bid_id, name, current_amount) VALUES
-('option1', 'bid1', 'Option 1', 30),
+('option1', 'bid1', 'Option 1', 20),
 ('option2', 'bid1', 'Option 2', 20),
-('option3', 'bid2', 'Option 3', 70);
+('option3', 'bid2', 'Option 3', 70),
+('option4', 'bid1', 'Option 4', 20);
 
 -- Insertar datos de prueba en la tabla donations
 INSERT INTO donations (id, name, email, time_mili, amount, description, to_bid, event_id) VALUES
-('donation1', 'Alice', 'alice@example.com', 1609459200000, 50, 'Donation for Run 1', true, 'event1'),
-('donation2', 'Bob', 'bob@example.com', 1609545600000, 100, 'Donation for Run 2', false, 'event2');
+('donation1', 'Alice', 'alice@example.com', 1609459200000, 20, 'Donation for Run 1', true, 'event1'),
+('donation2', 'Bob', 'bob@example.com', 1609545600000, 70, 'Donation for Run 2', true, 'event2'),
+('donation3', 'Pep', 'pep@example.com', 1609545600000, 20, 'Donation for Run 1 But Better', true, 'event1'),
+('donation4', 'Mary', 'mary@example.com', 1609632000000, 20, 'Another Donation for Bid1', true, 'event1'),
+('donation5', 'Rhino', 'rhino@example.com', 1609632000000, 80, 'Another Donation for Bid3', true, 'event1'),
+('donation6', 'Chemi', 'chemi@example.com', 1609632000000, 30, 'No bid donation!', false, 'event1');
 
 -- Insertar datos de prueba en la tabla donation_bids
-INSERT INTO donation_bids (donation_id, bid_id) VALUES
-('donation1', 'bid1'),
-('donation2', 'bid2');
+INSERT INTO donation_bids (donation_id, bid_id, bid_option_id) VALUES
+('donation1', 'bid1', 'option1'),
+('donation2', 'bid2', 'option3'),
+('donation3', 'bid1', 'option2'),
+('donation4', 'bid1', 'option4'),
+('donation5', 'bid3', NULL);
 
 -- Insertar datos de prueba en la tabla teams_runs
 INSERT INTO teams_runs (run_id, team_id) VALUES
