@@ -6,37 +6,11 @@ import (
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
+	"github.com/RhinoSC/sre-backend/internal/handler/util/run_helper"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
-
-type RunMetadataAsJSON struct {
-	Category       string `json:"category" validate:"required"`
-	Platform       string `json:"platform" validate:"required"`
-	TwitchGameName string `json:"twitch_game_name" validate:"required"`
-	RunName        string `json:"run_name" validate:"required"`
-	Note           string `json:"note"`
-}
-
-type RunAsJSON struct {
-	ID             string            `json:"id"`
-	Name           string            `json:"name"`
-	StartTimeMili  int64             `json:"start_time_mili"`
-	EstimateString string            `json:"estimate_string"`
-	EstimateMili   int64             `json:"estimate_mili"`
-	RunMetadata    RunMetadataAsJSON `json:"run_metadata"`
-	ScheduleId     string            `json:"schedule_id"`
-}
-
-type RunAsBodyJSON struct {
-	Name           string            `json:"name" validate:"required"`
-	StartTimeMili  int64             `json:"start_time_mili" validate:"required"`
-	EstimateString string            `json:"estimate_string" validate:"required"`
-	EstimateMili   int64             `json:"estimate_mili" validate:"required"`
-	RunMetadata    RunMetadataAsJSON `json:"run_metadata" validate:"required"`
-	ScheduleId     string            `json:"schedule_id" validate:"required"`
-}
 
 type RunDefault struct {
 	sv internal.RunService
@@ -48,10 +22,7 @@ func NewRunDefault(sv internal.RunService) *RunDefault {
 
 func (h *RunDefault) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// request
-
 		// process
-
 		runs, err := h.sv.FindAll()
 		if err != nil {
 			util.ResponseError(w, http.StatusNotFound, "Runs not found")
@@ -59,25 +30,7 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 		}
 
 		// response
-
-		data := make([]RunAsJSON, len(runs))
-		for i, run := range runs {
-			data[i] = RunAsJSON{
-				ID:             run.ID,
-				Name:           run.Name,
-				StartTimeMili:  run.StartTimeMili,
-				EstimateString: run.EstimateString,
-				EstimateMili:   run.EstimateMili,
-				RunMetadata: RunMetadataAsJSON{
-					Category:       run.RunMetadata.Category,
-					Platform:       run.RunMetadata.Platform,
-					TwitchGameName: run.RunMetadata.TwitchGameName,
-					RunName:        run.RunMetadata.RunName,
-					Note:           run.RunMetadata.Note,
-				},
-				ScheduleId: run.ScheduleId,
-			}
-		}
+		data := run_helper.ConvertRunsArrayToJSON(runs)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -108,22 +61,7 @@ func (h *RunDefault) GetByID() http.HandlerFunc {
 		}
 
 		// response
-
-		data := RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -136,7 +74,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 
-		var body RunAsBodyJSON
+		var body run_helper.RunAsBodyJSON
 		err := util.RequestJSON(r, &body)
 		if err != nil {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
@@ -152,21 +90,73 @@ func (h *RunDefault) Create() http.HandlerFunc {
 			return
 		}
 
+		runID := uuid.NewString()
+		runMetadataID := uuid.NewString()
 		run := internal.Run{
-			ID:             uuid.NewString(),
+			ID:             runID,
 			Name:           body.Name,
 			StartTimeMili:  body.StartTimeMili,
 			EstimateString: body.EstimateString,
 			EstimateMili:   body.EstimateMili,
 			RunMetadata: internal.RunMetadata{
-				ID:             uuid.NewString(),
+				ID:             runMetadataID,
+				RunID:          runID,
 				Category:       body.RunMetadata.Category,
 				Platform:       body.RunMetadata.Platform,
 				TwitchGameName: body.RunMetadata.TwitchGameName,
 				RunName:        body.RunMetadata.RunName,
 				Note:           body.RunMetadata.Note,
 			},
+			Teams:      make([]internal.RunTeams, len(body.RunTeams)),
+			Bids:       make([]internal.Bid, len(body.Bids)),
 			ScheduleId: body.ScheduleId,
+		}
+
+		for i, teamBody := range body.RunTeams {
+			teamID := uuid.NewString()
+			team := internal.RunTeams{
+				ID:      teamID,
+				Name:    teamBody.Name,
+				Players: make([]internal.RunTeamPlayers, len(teamBody.Players)),
+			}
+
+			for j, playerBody := range teamBody.Players {
+				player := internal.RunTeamPlayers{
+					UserID: playerBody.UserID,
+				}
+				team.Players[j] = player
+			}
+
+			run.Teams[i] = team
+		}
+
+		// Procesar las bids
+		for i, bidBody := range body.Bids {
+			bidID := uuid.NewString()
+			bid := internal.Bid{
+				ID:               bidID,
+				Bidname:          bidBody.Bidname,
+				Goal:             bidBody.Goal,
+				CurrentAmount:    bidBody.CurrentAmount,
+				Description:      bidBody.Description,
+				Type:             bidBody.Type,
+				CreateNewOptions: bidBody.CreateNewOptions,
+				RunID:            runID,
+				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
+			}
+
+			for j, optionBody := range bidBody.BidOptions {
+				bidOptionID := uuid.NewString()
+				option := internal.BidOptions{
+					ID:            bidOptionID,
+					Name:          optionBody.Name,
+					CurrentAmount: optionBody.CurrentAmount,
+					BidID:         bidID,
+				}
+				bid.BidOptions[j] = option
+			}
+
+			run.Bids[i] = bid
 		}
 
 		err = h.sv.Save(&run)
@@ -182,21 +172,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
@@ -207,7 +183,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 func (h *RunDefault) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// request
+		// Request
 
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -215,7 +191,21 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		// process
+		var body run_helper.RunAsJSON
+		err := util.RequestJSON(r, &body)
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		// Process
+
+		validate := validator.New()
+		err = validate.Struct(body)
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
 
 		run, err := h.sv.FindById(id)
 		if err != nil {
@@ -228,43 +218,82 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		runBody := RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-		}
+		run.Name = body.Name
+		run.StartTimeMili = body.StartTimeMili
+		run.EstimateString = body.EstimateString
+		run.EstimateMili = body.EstimateMili
+		run.RunMetadata.Category = body.RunMetadata.Category
+		run.RunMetadata.Platform = body.RunMetadata.Platform
+		run.RunMetadata.TwitchGameName = body.RunMetadata.TwitchGameName
+		run.RunMetadata.RunName = body.RunMetadata.RunName
+		run.RunMetadata.Note = body.RunMetadata.Note
+		run.ScheduleId = body.ScheduleId
 
-		if err := util.RequestJSON(r, &runBody); err != nil {
-			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
-			return
-		}
+		// Procesar equipos y jugadores
+		teams := make([]internal.RunTeams, len(body.RunTeams))
+		for i, teamBody := range body.RunTeams {
+			teamID := run.Teams[i].ID
+			if teamID == "" {
+				teamID = uuid.NewString()
+			}
+			team := internal.RunTeams{
+				ID:      teamID,
+				Name:    teamBody.Name,
+				Players: make([]internal.RunTeamPlayers, len(teamBody.Players)),
+			}
 
-		run = internal.Run{
-			ID:             runBody.ID,
-			Name:           runBody.Name,
-			StartTimeMili:  runBody.StartTimeMili,
-			EstimateString: runBody.EstimateString,
-			EstimateMili:   runBody.EstimateMili,
-			RunMetadata: internal.RunMetadata{
-				ID:             run.RunMetadata.ID,
-				Category:       runBody.RunMetadata.Category,
-				Platform:       runBody.RunMetadata.Platform,
-				TwitchGameName: runBody.RunMetadata.TwitchGameName,
-				RunName:        runBody.RunMetadata.RunName,
-				Note:           runBody.RunMetadata.Note,
-			},
-			ScheduleId: runBody.ScheduleId,
+			for j, playerBody := range teamBody.Players {
+				player := internal.RunTeamPlayers{
+					UserID: playerBody.UserID,
+				}
+				team.Players[j] = player
+			}
+
+			teams[i] = team
 		}
+		run.Teams = teams
+
+		// Procesar bids y bid_options
+		bids := make([]internal.Bid, len(body.Bids))
+		for i, bidBody := range body.Bids {
+			bidID := run.Bids[i].ID
+			if bidID == "" {
+				bidID = uuid.NewString()
+			}
+			bid := internal.Bid{
+				ID:               bidID,
+				Bidname:          bidBody.Bidname,
+				Goal:             bidBody.Goal,
+				CurrentAmount:    bidBody.CurrentAmount,
+				Description:      bidBody.Description,
+				Type:             bidBody.Type,
+				CreateNewOptions: bidBody.CreateNewOptions,
+				RunID:            run.ID,
+				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
+			}
+
+			for j, optionBody := range bidBody.BidOptions {
+				// Verificar si createOptions es falso y el ID de la opción es una cadena vacía
+				if !bid.CreateNewOptions && optionBody.ID == "" {
+					continue
+				}
+
+				bidOptionID := optionBody.ID
+				if optionBody.ID == "" {
+					bidOptionID = uuid.NewString()
+				}
+
+				option := internal.BidOptions{
+					ID:            bidOptionID,
+					Name:          optionBody.Name,
+					CurrentAmount: optionBody.CurrentAmount,
+				}
+				bid.BidOptions[j] = option
+			}
+
+			bids[i] = bid
+		}
+		run.Bids = bids
 
 		err = h.sv.Update(&run)
 		if err != nil {
@@ -277,23 +306,9 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		// response
+		// Response
 
-		data := RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
