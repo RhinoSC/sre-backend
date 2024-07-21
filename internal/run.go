@@ -2,6 +2,17 @@ package internal
 
 import "errors"
 
+type RunTeamPlayers struct {
+	UserID string
+	User   User
+}
+
+type RunTeams struct {
+	ID      string
+	Name    string
+	Players []RunTeamPlayers
+}
+
 type RunMetadata struct {
 	ID             string
 	RunID          string
@@ -19,6 +30,7 @@ type Run struct {
 	EstimateString string
 	EstimateMili   int64
 	RunMetadata
+	Teams      []RunTeams
 	ScheduleId string
 }
 

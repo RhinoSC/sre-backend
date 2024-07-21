@@ -6,37 +6,12 @@ import (
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
+	"github.com/RhinoSC/sre-backend/internal/handler/util/run_helper"
+	"github.com/RhinoSC/sre-backend/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
-
-type RunMetadataAsJSON struct {
-	Category       string `json:"category" validate:"required"`
-	Platform       string `json:"platform" validate:"required"`
-	TwitchGameName string `json:"twitch_game_name" validate:"required"`
-	RunName        string `json:"run_name" validate:"required"`
-	Note           string `json:"note"`
-}
-
-type RunAsJSON struct {
-	ID             string            `json:"id"`
-	Name           string            `json:"name"`
-	StartTimeMili  int64             `json:"start_time_mili"`
-	EstimateString string            `json:"estimate_string"`
-	EstimateMili   int64             `json:"estimate_mili"`
-	RunMetadata    RunMetadataAsJSON `json:"run_metadata"`
-	ScheduleId     string            `json:"schedule_id"`
-}
-
-type RunAsBodyJSON struct {
-	Name           string            `json:"name" validate:"required"`
-	StartTimeMili  int64             `json:"start_time_mili" validate:"required"`
-	EstimateString string            `json:"estimate_string" validate:"required"`
-	EstimateMili   int64             `json:"estimate_mili" validate:"required"`
-	RunMetadata    RunMetadataAsJSON `json:"run_metadata" validate:"required"`
-	ScheduleId     string            `json:"schedule_id" validate:"required"`
-}
 
 type RunDefault struct {
 	sv internal.RunService
@@ -48,10 +23,7 @@ func NewRunDefault(sv internal.RunService) *RunDefault {
 
 func (h *RunDefault) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// request
-
 		// process
-
 		runs, err := h.sv.FindAll()
 		if err != nil {
 			util.ResponseError(w, http.StatusNotFound, "Runs not found")
@@ -59,22 +31,49 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 		}
 
 		// response
-
-		data := make([]RunAsJSON, len(runs))
+		data := make([]run_helper.RunAsJSON, len(runs))
 		for i, run := range runs {
-			data[i] = RunAsJSON{
+			// Map the teams and players to the response format
+			var teams []run_helper.RunTeamsAsJSON
+			for _, team := range run.Teams {
+				var players []run_helper.RunTeamPlayersAsJSON
+				for _, player := range team.Players {
+
+					socials := run_helper.RunTeamPlayerUserSocialsAsJSON{
+						ID:       player.User.UserSocials.ID,
+						Twitch:   player.User.UserSocials.Twitch,
+						Twitter:  player.User.UserSocials.Twitter,
+						Youtube:  player.User.UserSocials.Youtube,
+						Facebook: player.User.UserSocials.Facebook,
+					}
+					players = append(players, run_helper.RunTeamPlayersAsJSON{
+						UserID:       player.UserID,
+						UserName:     player.User.Name,
+						UserUsername: player.User.Username,
+						Socials:      &socials,
+					})
+				}
+				teams = append(teams, run_helper.RunTeamsAsJSON{
+					ID:      team.ID,
+					Name:    team.Name,
+					Players: players,
+				})
+			}
+
+			data[i] = run_helper.RunAsJSON{
 				ID:             run.ID,
 				Name:           run.Name,
 				StartTimeMili:  run.StartTimeMili,
 				EstimateString: run.EstimateString,
 				EstimateMili:   run.EstimateMili,
-				RunMetadata: RunMetadataAsJSON{
+				RunMetadata: run_helper.RunMetadataAsJSON{
 					Category:       run.RunMetadata.Category,
 					Platform:       run.RunMetadata.Platform,
 					TwitchGameName: run.RunMetadata.TwitchGameName,
 					RunName:        run.RunMetadata.RunName,
 					Note:           run.RunMetadata.Note,
 				},
+				RunTeams:   teams,
 				ScheduleId: run.ScheduleId,
 			}
 		}
@@ -107,21 +106,50 @@ func (h *RunDefault) GetByID() http.HandlerFunc {
 			return
 		}
 
+		// Map the teams and players to the response format
+		var teams []run_helper.RunTeamsAsJSON
+		for _, team := range run.Teams {
+			var players []run_helper.RunTeamPlayersAsJSON
+			for _, player := range team.Players {
+
+				socials := run_helper.RunTeamPlayerUserSocialsAsJSON{
+					ID:       player.User.UserSocials.ID,
+					Twitch:   player.User.UserSocials.Twitch,
+					Twitter:  player.User.UserSocials.Twitter,
+					Youtube:  player.User.UserSocials.Youtube,
+					Facebook: player.User.UserSocials.Facebook,
+				}
+
+				players = append(players, run_helper.RunTeamPlayersAsJSON{
+					UserID:       player.UserID,
+					UserName:     player.User.Name,
+					UserUsername: player.User.Username,
+					Socials:      &socials,
+				})
+			}
+			teams = append(teams, run_helper.RunTeamsAsJSON{
+				ID:      team.ID,
+				Name:    team.Name,
+				Players: players,
+			})
+		}
+
 		// response
 
-		data := RunAsJSON{
+		data := run_helper.RunAsJSON{
 			ID:             run.ID,
 			Name:           run.Name,
 			StartTimeMili:  run.StartTimeMili,
 			EstimateString: run.EstimateString,
 			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
+			RunMetadata: run_helper.RunMetadataAsJSON{
 				Category:       run.RunMetadata.Category,
 				Platform:       run.RunMetadata.Platform,
 				TwitchGameName: run.RunMetadata.TwitchGameName,
 				RunName:        run.RunMetadata.RunName,
 				Note:           run.RunMetadata.Note,
 			},
+			RunTeams:   teams,
 			ScheduleId: run.ScheduleId,
 		}
 
@@ -136,7 +164,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
 
-		var body RunAsBodyJSON
+		var body run_helper.RunAsBodyJSON
 		err := util.RequestJSON(r, &body)
 		if err != nil {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
@@ -167,6 +195,24 @@ func (h *RunDefault) Create() http.HandlerFunc {
 				Note:           body.RunMetadata.Note,
 			},
 			ScheduleId: body.ScheduleId,
+			Teams:      make([]internal.RunTeams, len(body.RunTeams)),
+		}
+
+		for i, teamBody := range body.RunTeams {
+			team := internal.RunTeams{
+				ID:      uuid.NewString(),
+				Name:    teamBody.Name,
+				Players: make([]internal.RunTeamPlayers, len(teamBody.Players)),
+			}
+
+			for j, playerBody := range teamBody.Players {
+				player := internal.RunTeamPlayers{
+					UserID: playerBody.UserID,
+				}
+				team.Players[j] = player
+			}
+
+			run.Teams[i] = team
 		}
 
 		err = h.sv.Save(&run)
@@ -182,13 +228,13 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := RunAsJSON{
+		data := run_helper.RunAsJSON{
 			ID:             run.ID,
 			Name:           run.Name,
 			StartTimeMili:  run.StartTimeMili,
 			EstimateString: run.EstimateString,
 			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
+			RunMetadata: run_helper.RunMetadataAsJSON{
 				Category:       run.RunMetadata.Category,
 				Platform:       run.RunMetadata.Platform,
 				TwitchGameName: run.RunMetadata.TwitchGameName,
@@ -196,6 +242,23 @@ func (h *RunDefault) Create() http.HandlerFunc {
 				Note:           run.RunMetadata.Note,
 			},
 			ScheduleId: run.ScheduleId,
+			RunTeams:   make([]run_helper.RunTeamsAsJSON, len(run.Teams)),
+		}
+
+		for i, team := range run.Teams {
+			teamJSON := run_helper.RunTeamsAsJSON{
+				ID:      team.ID,
+				Name:    team.Name,
+				Players: make([]run_helper.RunTeamPlayersAsJSON, len(team.Players)),
+			}
+
+			for j, player := range team.Players {
+				teamJSON.Players[j] = run_helper.RunTeamPlayersAsJSON{
+					UserID: player.UserID,
+				}
+			}
+
+			data.RunTeams[i] = teamJSON
 		}
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
@@ -207,7 +270,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 func (h *RunDefault) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// request
+		// Request
 
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -215,7 +278,21 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		// process
+		var body run_helper.RunAsBodyJSON
+		err := util.RequestJSON(r, &body)
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		// Process
+
+		validate := validator.New()
+		err = validate.Struct(body)
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
 
 		run, err := h.sv.FindById(id)
 		if err != nil {
@@ -228,43 +305,40 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		runBody := RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-		}
+		run.Name = body.Name
+		run.StartTimeMili = body.StartTimeMili
+		run.EstimateString = body.EstimateString
+		run.EstimateMili = body.EstimateMili
+		run.RunMetadata.Category = body.RunMetadata.Category
+		run.RunMetadata.Platform = body.RunMetadata.Platform
+		run.RunMetadata.TwitchGameName = body.RunMetadata.TwitchGameName
+		run.RunMetadata.RunName = body.RunMetadata.RunName
+		run.RunMetadata.Note = body.RunMetadata.Note
+		run.ScheduleId = body.ScheduleId
 
-		if err := util.RequestJSON(r, &runBody); err != nil {
-			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
-			return
-		}
+		logger.Log.Info(run)
+		teams := make([]internal.RunTeams, len(body.RunTeams))
+		for i, teamBody := range body.RunTeams {
+			teamID := run.Teams[i].ID
+			if teamID == "" {
+				teamID = uuid.NewString()
+			}
+			team := internal.RunTeams{
+				ID:      teamID,
+				Name:    teamBody.Name,
+				Players: make([]internal.RunTeamPlayers, len(teamBody.Players)),
+			}
 
-		run = internal.Run{
-			ID:             runBody.ID,
-			Name:           runBody.Name,
-			StartTimeMili:  runBody.StartTimeMili,
-			EstimateString: runBody.EstimateString,
-			EstimateMili:   runBody.EstimateMili,
-			RunMetadata: internal.RunMetadata{
-				ID:             run.RunMetadata.ID,
-				Category:       runBody.RunMetadata.Category,
-				Platform:       runBody.RunMetadata.Platform,
-				TwitchGameName: runBody.RunMetadata.TwitchGameName,
-				RunName:        runBody.RunMetadata.RunName,
-				Note:           runBody.RunMetadata.Note,
-			},
-			ScheduleId: runBody.ScheduleId,
+			for j, playerBody := range teamBody.Players {
+				player := internal.RunTeamPlayers{
+					UserID: playerBody.UserID,
+				}
+				team.Players[j] = player
+			}
+
+			teams[i] = team
 		}
+		run.Teams = teams
 
 		err = h.sv.Update(&run)
 		if err != nil {
@@ -277,15 +351,15 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		// response
+		// Response
 
-		data := RunAsJSON{
+		data := run_helper.RunAsJSON{
 			ID:             run.ID,
 			Name:           run.Name,
 			StartTimeMili:  run.StartTimeMili,
 			EstimateString: run.EstimateString,
 			EstimateMili:   run.EstimateMili,
-			RunMetadata: RunMetadataAsJSON{
+			RunMetadata: run_helper.RunMetadataAsJSON{
 				Category:       run.RunMetadata.Category,
 				Platform:       run.RunMetadata.Platform,
 				TwitchGameName: run.RunMetadata.TwitchGameName,
@@ -293,6 +367,25 @@ func (h *RunDefault) Update() http.HandlerFunc {
 				Note:           run.RunMetadata.Note,
 			},
 			ScheduleId: run.ScheduleId,
+			RunTeams:   make([]run_helper.RunTeamsAsJSON, len(run.Teams)),
+		}
+
+		for i, team := range run.Teams {
+			teamJSON := run_helper.RunTeamsAsJSON{
+				ID:      team.ID,
+				Name:    team.Name,
+				Players: make([]run_helper.RunTeamPlayersAsJSON, len(team.Players)),
+			}
+
+			for j, player := range team.Players {
+
+				playerJSON := run_helper.RunTeamPlayersAsJSON{
+					UserID: player.UserID,
+				}
+				teamJSON.Players[j] = playerJSON
+			}
+
+			data.RunTeams[i] = teamJSON
 		}
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
