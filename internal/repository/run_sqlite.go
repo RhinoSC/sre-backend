@@ -71,8 +71,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	FROM 
 		runs AS r
 		JOIN run_metadata AS rm ON r.id = rm.run_id
-		LEFT JOIN teams_runs AS tr ON r.id = tr.run_id
-		LEFT JOIN teams AS t ON tr.team_id = t.id
+		LEFT JOIN teams AS t ON t.run_id = r.id
 		LEFT JOIN players AS pl ON t.id = pl.team_id
 		LEFT JOIN users AS u ON pl.user_id = u.id
 		LEFT JOIN user_socials AS um ON u.id = um.user_id
@@ -226,8 +225,7 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 						b.id AS bid_id, b.bidname AS bid_name, b.goal AS bid_goal, b.current_amount AS bid_current_amount, b.description AS bid_description, b.type AS bid_type, b.create_new_options AS bid_create_new_options,
 						bo.id AS bid_option_id, bo.name AS bid_option_name, bo.current_amount AS bid_option_current_amount FROM  runs AS r
 						JOIN  run_metadata AS rm ON r.id = rm.run_id
-						LEFT JOIN teams_runs AS tr ON r.id = tr.run_id
-						LEFT JOIN teams AS t ON tr.team_id = t.id
+						LEFT JOIN teams AS t ON t.run_id = r.id
 						LEFT JOIN players AS pl ON t.id = pl.team_id
 						LEFT JOIN users AS u ON pl.user_id = u.id
 						LEFT JOIN user_socials AS um ON u.id = um.user_id
@@ -390,22 +388,7 @@ func (r *RunSqlite) Save(run *internal.Run) (err error) {
 	}
 
 	for _, team := range run.Teams {
-		_, err = tx.Exec("INSERT INTO teams (id, name) VALUES (?, ?) ON CONFLICT(id) DO NOTHING;", team.ID, team.Name)
-		if err != nil {
-			var sqliteErr sqlite3.Error
-			if errors.As(err, &sqliteErr) {
-				switch {
-				case sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique:
-					err = internal.ErrRunRepositoryDuplicated
-				default:
-					err = internal.ErrRunDatabase
-				}
-				logger.Log.Error(err.Error())
-				return
-			}
-		}
-
-		_, err = tx.Exec("INSERT INTO teams_runs (run_id, team_id) VALUES (?, ?);", run.ID, team.ID)
+		_, err = tx.Exec("INSERT INTO teams (id, name, run_id) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING;", team.ID, team.Name, run.ID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {
@@ -507,8 +490,8 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 		}
 	}
 
-	// Eliminar asociaciones antiguas de teams_runs y players
-	_, err = tx.Exec("DELETE FROM teams_runs WHERE run_id = ?;", run.ID)
+	// Eliminar asociaciones antiguas de teams y players
+	_, err = tx.Exec("DELETE FROM teams WHERE run_id = ?;", run.ID)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		return
@@ -526,23 +509,7 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 	// Insertar o actualizar equipos y jugadores
 	for _, team := range run.Teams {
 		// Insertar o actualizar el equipo
-		_, err = tx.Exec("INSERT INTO teams (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name;", team.ID, team.Name)
-		if err != nil {
-			var sqliteErr sqlite3.Error
-			if errors.As(err, &sqliteErr) {
-				switch {
-				case sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique:
-					err = internal.ErrRunRepositoryDuplicated
-				default:
-					err = internal.ErrRunDatabase
-				}
-				logger.Log.Error(err.Error())
-				return
-			}
-		}
-
-		// Insertar asociación en teams_runs
-		_, err = tx.Exec("INSERT INTO teams_runs (run_id, team_id) VALUES (?, ?);", run.ID, team.ID)
+		_, err = tx.Exec("INSERT INTO teams (id, name, run_id) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name;", team.ID, team.Name, run.ID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {
@@ -635,13 +602,6 @@ func (r *RunSqlite) Delete(id string) (err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		logger.Log.Error("Error starting transaction on delete run: " + err.Error())
-		return
-	}
-
-	// Eliminar teams asociados con la run
-	_, err = tx.Exec("DELETE FROM teams WHERE id IN (SELECT team_id FROM teams_runs WHERE run_id = ?);", id)
-	if err != nil {
-		logger.Log.Error("Error deleting from teams: " + err.Error())
 		return
 	}
 

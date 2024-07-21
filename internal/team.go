@@ -3,8 +3,9 @@ package internal
 import "errors"
 
 type Team struct {
-	ID   string
-	Name string
+	ID    string
+	Name  string
+	RunID string
 }
 
 var (
