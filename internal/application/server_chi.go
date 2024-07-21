@@ -74,6 +74,7 @@ func (s *ServerChi) Run() (err error) {
 		buildRunRouter(&r, db)
 		buildTeamRouter(&r, db)
 		buildBidRouter(&r, db)
+		buildDonationRouter(&r, db)
 	})
 
 	err = http.ListenAndServe(s.address, router)
@@ -174,6 +175,21 @@ func buildBidRouter(router *chi.Router, db *sql.DB) {
 	(*router).Route("/bids", func(rt chi.Router) {
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
+		rt.Post("/", hd.Create())
+		rt.Patch("/{id}", hd.Update())
+		rt.Delete("/{id}", hd.Delete())
+	})
+}
+
+func buildDonationRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewDonationSqlite(db)
+	sv := service.NewDonationDefault(rp)
+	hd := handler.NewDonationDefault(sv)
+
+	(*router).Route("/donations", func(rt chi.Router) {
+		rt.Get("/", hd.GetAll())
+		rt.Get("/{id}", hd.GetByID())
+		rt.Get("/event/{id}", hd.GetByEventID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
 		rt.Delete("/{id}", hd.Delete())

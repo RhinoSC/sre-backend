@@ -40,7 +40,7 @@ func (r *BidSqlite) FindAll() (bids []internal.Bid, err error) {
 					bids[i].BidOptions = append(bids[i].BidOptions, internal.BidOptions{
 						ID:            bidOption.ID.String,
 						Name:          bidOption.Name.String,
-						CurrentAmount: int(bidOption.CurrentAmount.Int64),
+						CurrentAmount: float64(bidOption.CurrentAmount.Float64),
 						BidID:         bidOption.BidID.String,
 					})
 				}
@@ -54,7 +54,7 @@ func (r *BidSqlite) FindAll() (bids []internal.Bid, err error) {
 				bid.BidOptions = []internal.BidOptions{{
 					ID:            bidOption.ID.String,
 					Name:          bidOption.Name.String,
-					CurrentAmount: int(bidOption.CurrentAmount.Int64),
+					CurrentAmount: float64(bidOption.CurrentAmount.Float64),
 					BidID:         bidOption.BidID.String,
 				}}
 			}

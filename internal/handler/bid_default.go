@@ -14,23 +14,23 @@ import (
 )
 
 type BidOptionAsJSON struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	CurrentAmount int    `json:"current_amount"`
-	BidID         string `json:"bid_id"`
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	CurrentAmount float64 `json:"current_amount"`
+	BidID         string  `json:"bid_id"`
 }
 
 type BidOptionAsBodyJSON struct {
-	Name          string `json:"name" validate:"required"`
-	CurrentAmount int    `json:"current_amount"`
-	BidID         string `json:"bid_id" validate:"required"`
+	Name          string  `json:"name" validate:"required"`
+	CurrentAmount float64 `json:"current_amount"`
+	BidID         string  `json:"bid_id" validate:"required"`
 }
 
 type BidAsJSON struct {
 	ID               string            `json:"id"`
 	Bidname          string            `json:"bidname"`
-	Goal             int               `json:"goal"`
-	CurrentAmount    int               `json:"current_amount"`
+	Goal             float64           `json:"goal"`
+	CurrentAmount    float64           `json:"current_amount"`
 	Description      string            `json:"description"`
 	Type             internal.BidType  `json:"type"`
 	CreateNewOptions bool              `json:"create_new_options"`
@@ -40,8 +40,8 @@ type BidAsJSON struct {
 
 type BidAsBodyJSON struct {
 	Bidname          string            `json:"bidname" validate:"required"`
-	Goal             int               `json:"goal" validate:"required"`
-	CurrentAmount    int               `json:"current_amount"`
+	Goal             float64           `json:"goal" validate:"required"`
+	CurrentAmount    float64           `json:"current_amount"`
 	Description      string            `json:"description" validate:"required"`
 	Type             internal.BidType  `json:"type" validate:"required"`
 	CreateNewOptions bool              `json:"create_new_options"`
