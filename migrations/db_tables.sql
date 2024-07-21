@@ -123,9 +123,11 @@ CREATE TABLE donations (
 CREATE TABLE donation_bids (
     donation_id VARCHAR(255) NOT NULL,
     bid_id VARCHAR(255) NOT NULL,
+    bid_option_id VARCHAR(255),
     PRIMARY KEY (donation_id, bid_id),
     FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE,
     FOREIGN KEY (bid_id) REFERENCES bids(id) ON DELETE CASCADE
+    FOREIGN KEY (bid_option_id) REFERENCES bid_options(id) ON DELETE CASCADE
 );
 
 -- Migration for creating the 'teams_runs' table

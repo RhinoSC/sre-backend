@@ -16,22 +16,22 @@ const (
 type BidOptions struct {
 	ID            string
 	Name          string
-	CurrentAmount int
+	CurrentAmount float64
 	BidID         string
 }
 
 type BidOptionsSQL struct {
 	ID            sql.NullString
 	Name          sql.NullString
-	CurrentAmount sql.NullInt64
+	CurrentAmount sql.NullFloat64
 	BidID         sql.NullString
 }
 
 type Bid struct {
 	ID               string
 	Bidname          string
-	Goal             int
-	CurrentAmount    int
+	Goal             float64
+	CurrentAmount    float64
 	Description      string
 	Type             BidType
 	CreateNewOptions bool
