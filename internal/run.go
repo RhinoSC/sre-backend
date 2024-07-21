@@ -31,6 +31,7 @@ type Run struct {
 	EstimateMili   int64
 	RunMetadata
 	Teams      []RunTeams
+	Bids       []Bid
 	ScheduleId string
 }
 

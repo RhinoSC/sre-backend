@@ -7,7 +7,6 @@ import (
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
 	"github.com/RhinoSC/sre-backend/internal/handler/util/run_helper"
-	"github.com/RhinoSC/sre-backend/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
@@ -31,52 +30,7 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 		}
 
 		// response
-		data := make([]run_helper.RunAsJSON, len(runs))
-		for i, run := range runs {
-			// Map the teams and players to the response format
-			var teams []run_helper.RunTeamsAsJSON
-			for _, team := range run.Teams {
-				var players []run_helper.RunTeamPlayersAsJSON
-				for _, player := range team.Players {
-
-					socials := run_helper.RunTeamPlayerUserSocialsAsJSON{
-						ID:       player.User.UserSocials.ID,
-						Twitch:   player.User.UserSocials.Twitch,
-						Twitter:  player.User.UserSocials.Twitter,
-						Youtube:  player.User.UserSocials.Youtube,
-						Facebook: player.User.UserSocials.Facebook,
-					}
-					players = append(players, run_helper.RunTeamPlayersAsJSON{
-						UserID:       player.UserID,
-						UserName:     player.User.Name,
-						UserUsername: player.User.Username,
-						Socials:      &socials,
-					})
-				}
-				teams = append(teams, run_helper.RunTeamsAsJSON{
-					ID:      team.ID,
-					Name:    team.Name,
-					Players: players,
-				})
-			}
-
-			data[i] = run_helper.RunAsJSON{
-				ID:             run.ID,
-				Name:           run.Name,
-				StartTimeMili:  run.StartTimeMili,
-				EstimateString: run.EstimateString,
-				EstimateMili:   run.EstimateMili,
-				RunMetadata: run_helper.RunMetadataAsJSON{
-					Category:       run.RunMetadata.Category,
-					Platform:       run.RunMetadata.Platform,
-					TwitchGameName: run.RunMetadata.TwitchGameName,
-					RunName:        run.RunMetadata.RunName,
-					Note:           run.RunMetadata.Note,
-				},
-				RunTeams:   teams,
-				ScheduleId: run.ScheduleId,
-			}
-		}
+		data := run_helper.ConvertRunsArrayToJSON(runs)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -106,52 +60,8 @@ func (h *RunDefault) GetByID() http.HandlerFunc {
 			return
 		}
 
-		// Map the teams and players to the response format
-		var teams []run_helper.RunTeamsAsJSON
-		for _, team := range run.Teams {
-			var players []run_helper.RunTeamPlayersAsJSON
-			for _, player := range team.Players {
-
-				socials := run_helper.RunTeamPlayerUserSocialsAsJSON{
-					ID:       player.User.UserSocials.ID,
-					Twitch:   player.User.UserSocials.Twitch,
-					Twitter:  player.User.UserSocials.Twitter,
-					Youtube:  player.User.UserSocials.Youtube,
-					Facebook: player.User.UserSocials.Facebook,
-				}
-
-				players = append(players, run_helper.RunTeamPlayersAsJSON{
-					UserID:       player.UserID,
-					UserName:     player.User.Name,
-					UserUsername: player.User.Username,
-					Socials:      &socials,
-				})
-			}
-			teams = append(teams, run_helper.RunTeamsAsJSON{
-				ID:      team.ID,
-				Name:    team.Name,
-				Players: players,
-			})
-		}
-
 		// response
-
-		data := run_helper.RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: run_helper.RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			RunTeams:   teams,
-			ScheduleId: run.ScheduleId,
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -180,27 +90,32 @@ func (h *RunDefault) Create() http.HandlerFunc {
 			return
 		}
 
+		runID := uuid.NewString()
+		runMetadataID := uuid.NewString()
 		run := internal.Run{
-			ID:             uuid.NewString(),
+			ID:             runID,
 			Name:           body.Name,
 			StartTimeMili:  body.StartTimeMili,
 			EstimateString: body.EstimateString,
 			EstimateMili:   body.EstimateMili,
 			RunMetadata: internal.RunMetadata{
-				ID:             uuid.NewString(),
+				ID:             runMetadataID,
+				RunID:          runID,
 				Category:       body.RunMetadata.Category,
 				Platform:       body.RunMetadata.Platform,
 				TwitchGameName: body.RunMetadata.TwitchGameName,
 				RunName:        body.RunMetadata.RunName,
 				Note:           body.RunMetadata.Note,
 			},
-			ScheduleId: body.ScheduleId,
 			Teams:      make([]internal.RunTeams, len(body.RunTeams)),
+			Bids:       make([]internal.Bid, len(body.Bids)),
+			ScheduleId: body.ScheduleId,
 		}
 
 		for i, teamBody := range body.RunTeams {
+			teamID := uuid.NewString()
 			team := internal.RunTeams{
-				ID:      uuid.NewString(),
+				ID:      teamID,
 				Name:    teamBody.Name,
 				Players: make([]internal.RunTeamPlayers, len(teamBody.Players)),
 			}
@@ -213,6 +128,35 @@ func (h *RunDefault) Create() http.HandlerFunc {
 			}
 
 			run.Teams[i] = team
+		}
+
+		// Procesar las bids
+		for i, bidBody := range body.Bids {
+			bidID := uuid.NewString()
+			bid := internal.Bid{
+				ID:               bidID,
+				Bidname:          bidBody.Bidname,
+				Goal:             bidBody.Goal,
+				CurrentAmount:    bidBody.CurrentAmount,
+				Description:      bidBody.Description,
+				Type:             bidBody.Type,
+				CreateNewOptions: bidBody.CreateNewOptions,
+				RunID:            runID,
+				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
+			}
+
+			for j, optionBody := range bidBody.BidOptions {
+				bidOptionID := uuid.NewString()
+				option := internal.BidOptions{
+					ID:            bidOptionID,
+					Name:          optionBody.Name,
+					CurrentAmount: optionBody.CurrentAmount,
+					BidID:         bidID,
+				}
+				bid.BidOptions[j] = option
+			}
+
+			run.Bids[i] = bid
 		}
 
 		err = h.sv.Save(&run)
@@ -228,38 +172,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := run_helper.RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: run_helper.RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-			RunTeams:   make([]run_helper.RunTeamsAsJSON, len(run.Teams)),
-		}
-
-		for i, team := range run.Teams {
-			teamJSON := run_helper.RunTeamsAsJSON{
-				ID:      team.ID,
-				Name:    team.Name,
-				Players: make([]run_helper.RunTeamPlayersAsJSON, len(team.Players)),
-			}
-
-			for j, player := range team.Players {
-				teamJSON.Players[j] = run_helper.RunTeamPlayersAsJSON{
-					UserID: player.UserID,
-				}
-			}
-
-			data.RunTeams[i] = teamJSON
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
@@ -278,7 +191,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		var body run_helper.RunAsBodyJSON
+		var body run_helper.RunAsJSON
 		err := util.RequestJSON(r, &body)
 		if err != nil {
 			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
@@ -316,7 +229,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		run.RunMetadata.Note = body.RunMetadata.Note
 		run.ScheduleId = body.ScheduleId
 
-		logger.Log.Info(run)
+		// Procesar equipos y jugadores
 		teams := make([]internal.RunTeams, len(body.RunTeams))
 		for i, teamBody := range body.RunTeams {
 			teamID := run.Teams[i].ID
@@ -340,6 +253,48 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		}
 		run.Teams = teams
 
+		// Procesar bids y bid_options
+		bids := make([]internal.Bid, len(body.Bids))
+		for i, bidBody := range body.Bids {
+			bidID := run.Bids[i].ID
+			if bidID == "" {
+				bidID = uuid.NewString()
+			}
+			bid := internal.Bid{
+				ID:               bidID,
+				Bidname:          bidBody.Bidname,
+				Goal:             bidBody.Goal,
+				CurrentAmount:    bidBody.CurrentAmount,
+				Description:      bidBody.Description,
+				Type:             bidBody.Type,
+				CreateNewOptions: bidBody.CreateNewOptions,
+				RunID:            run.ID,
+				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
+			}
+
+			for j, optionBody := range bidBody.BidOptions {
+				// Verificar si createOptions es falso y el ID de la opción es una cadena vacía
+				if !bid.CreateNewOptions && optionBody.ID == "" {
+					continue
+				}
+
+				bidOptionID := optionBody.ID
+				if optionBody.ID == "" {
+					bidOptionID = uuid.NewString()
+				}
+
+				option := internal.BidOptions{
+					ID:            bidOptionID,
+					Name:          optionBody.Name,
+					CurrentAmount: optionBody.CurrentAmount,
+				}
+				bid.BidOptions[j] = option
+			}
+
+			bids[i] = bid
+		}
+		run.Bids = bids
+
 		err = h.sv.Update(&run)
 		if err != nil {
 			switch {
@@ -353,40 +308,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 
 		// Response
 
-		data := run_helper.RunAsJSON{
-			ID:             run.ID,
-			Name:           run.Name,
-			StartTimeMili:  run.StartTimeMili,
-			EstimateString: run.EstimateString,
-			EstimateMili:   run.EstimateMili,
-			RunMetadata: run_helper.RunMetadataAsJSON{
-				Category:       run.RunMetadata.Category,
-				Platform:       run.RunMetadata.Platform,
-				TwitchGameName: run.RunMetadata.TwitchGameName,
-				RunName:        run.RunMetadata.RunName,
-				Note:           run.RunMetadata.Note,
-			},
-			ScheduleId: run.ScheduleId,
-			RunTeams:   make([]run_helper.RunTeamsAsJSON, len(run.Teams)),
-		}
-
-		for i, team := range run.Teams {
-			teamJSON := run_helper.RunTeamsAsJSON{
-				ID:      team.ID,
-				Name:    team.Name,
-				Players: make([]run_helper.RunTeamPlayersAsJSON, len(team.Players)),
-			}
-
-			for j, player := range team.Players {
-
-				playerJSON := run_helper.RunTeamPlayersAsJSON{
-					UserID: player.UserID,
-				}
-				teamJSON.Players[j] = playerJSON
-			}
-
-			data.RunTeams[i] = teamJSON
-		}
+		data := run_helper.ConvertRunToJSON(run)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
