@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS runs;
 DROP TABLE IF EXISTS prizes;
 DROP TABLE IF EXISTS user_socials;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS teams;
 DROP TABLE IF EXISTS donations;
 DROP TABLE IF EXISTS schedules;
@@ -90,6 +91,14 @@ CREATE TABLE user_socials (
     youtube VARCHAR(255) DEFAULT NULL,
     facebook VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Migration for creating the 'admins' table
+CREATE TABLE admins (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Migration for creating the 'prizes' table

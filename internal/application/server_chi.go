@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/RhinoSC/sre-backend/internal/auth"
 	"github.com/RhinoSC/sre-backend/internal/handler"
 	"github.com/RhinoSC/sre-backend/internal/logger"
 	"github.com/RhinoSC/sre-backend/internal/repository"
@@ -17,24 +18,32 @@ import (
 
 type ConfigServerChi struct {
 	// Address is the address to listen on
-	Address string
+	Address   string
+	JWTSecret string
 }
 
 type ServerChi struct {
-	address string
+	address   string
+	jwtSecret string
 }
 
 func NewServerChi(cfg ConfigServerChi) *ServerChi {
 	defaultCfg := ConfigServerChi{
-		Address: ":8080",
+		Address:   ":8080",
+		JWTSecret: "defaultsecret",
 	}
 
 	if cfg.Address != "" {
 		defaultCfg.Address = cfg.Address
 	}
 
+	if cfg.JWTSecret != "" {
+		defaultCfg.JWTSecret = cfg.JWTSecret
+	}
+
 	return &ServerChi{
-		address: defaultCfg.Address,
+		address:   defaultCfg.Address,
+		jwtSecret: defaultCfg.JWTSecret,
 	}
 }
 
@@ -59,20 +68,31 @@ func (s *ServerChi) Run() (err error) {
 	// initialize logger
 	logger.InitializeLogger()
 
+	// Initialize JWT Auth
+	auth.Init(s.jwtSecret)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	router.Use(auth.Verifier())
 
 	router.Get("/ping", handler.PingHandler())
 
 	router.Route("/api/v1", func(r chi.Router) {
-		buildUserRouter(&r, db)
-		buildEventRouter(&r, db)
-		buildPrizeRouter(&r, db)
+
+		r.With(auth.Authenticator()).Group(func(rt chi.Router) {
+			buildUserRouter(&rt, db)
+			buildEventRouter(&rt, db)
+			buildPrizeRouter(&rt, db)
+			buildTeamRouter(&rt, db)
+		})
+
+		// Algunas rutas privadas y otras publicas
+		buildAdminRouter(&r, db)
 		buildScheduleRouter(&r, db)
 		buildRunRouter(&r, db)
-		buildTeamRouter(&r, db)
+
 		buildBidRouter(&r, db)
 		buildDonationRouter(&r, db)
 	})
@@ -82,6 +102,26 @@ func (s *ServerChi) Run() (err error) {
 	return
 }
 
+func buildAdminRouter(router *chi.Router, db *sql.DB) {
+	rp := repository.NewAdminSqlite(db)
+	sv := service.NewAdminDefault(rp)
+	hd := handler.NewAdminDefault(sv)
+
+	(*router).Route("/admins", func(rt chi.Router) {
+
+		// Public
+		rt.Post("/login", hd.Login())
+
+		// Private
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Get("/", hd.GetAll())
+			r.Get("/{id}", hd.GetByID())
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
+	})
+}
 func buildUserRouter(router *chi.Router, db *sql.DB) {
 	rp := repository.NewUserSqlite(db)
 	sv := service.NewUserDefault(rp)
@@ -131,11 +171,15 @@ func buildScheduleRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewScheduleDefault(sv)
 
 	(*router).Route("/schedules", func(rt chi.Router) {
+
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
-		rt.Post("/", hd.Create())
-		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
 
@@ -145,11 +189,15 @@ func buildRunRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewRunDefault(sv)
 
 	(*router).Route("/runs", func(rt chi.Router) {
+
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
-		rt.Post("/", hd.Create())
-		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
 
@@ -173,11 +221,15 @@ func buildBidRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewBidDefault(sv)
 
 	(*router).Route("/bids", func(rt chi.Router) {
+
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
-		rt.Post("/", hd.Create())
-		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
 
@@ -187,11 +239,15 @@ func buildDonationRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewDonationDefault(sv)
 
 	(*router).Route("/donations", func(rt chi.Router) {
+
 		rt.Get("/", hd.GetAll())
 		rt.Get("/{id}", hd.GetByID())
 		rt.Get("/event/{id}", hd.GetByEventID())
 		rt.Post("/", hd.Create())
 		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
