@@ -52,6 +52,10 @@ INSERT INTO user_socials (id, user_id, twitch, twitter, youtube, facebook) VALUE
 ('social7', 'user7', 'twitch_user7', 'twitter_user7', 'youtube_user7', 'facebook_user7'),
 ('social8', 'user8', 'twitch_user8', 'twitter_user8', 'youtube_user8', 'facebook_user8');
 
+-- Insertar datos de prueba en la tabla admins
+INSERT INTO admins (id, username, password, created_at) VALUES
+('admin1', 'admin', 'admin', datetime('now'));
+
 -- Insertar datos de prueba en la tabla prizes
 INSERT INTO prizes (id, name, description, url, min_amount, status, international_delivery, event_id) VALUES
 ('prize1', 'Prize 1', 'Description for Prize 1', 'http://example.com/prize1', 50, 'Available', true, 'event1'),
