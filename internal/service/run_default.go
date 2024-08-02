@@ -80,3 +80,15 @@ func (s *RunDefault) Delete(id string) (err error) {
 	}
 	return
 }
+
+func (s *RunDefault) UpdateRunOrder(runs []internal.Run) (err error) {
+	err = s.rp.UpdateRunOrder(runs)
+	if err != nil {
+		switch {
+		default:
+			err = fmt.Errorf("error updating runs order: %w", err)
+		}
+		return
+	}
+	return
+}

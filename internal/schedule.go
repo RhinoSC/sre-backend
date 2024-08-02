@@ -8,6 +8,7 @@ type Schedule struct {
 	Start_time_mili int64
 	End_time_mili   int64
 	EventID         string
+	Runs            []Run
 }
 
 var (

@@ -8,19 +8,11 @@ import (
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
+	"github.com/RhinoSC/sre-backend/internal/handler/util/team_helper"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
-
-type TeamAsJSON struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type TeamAsBodyJSON struct {
-	Name string `json:"name" validate:"required"`
-}
 
 type TeamDefault struct {
 	sv internal.TeamService
@@ -46,9 +38,9 @@ func (h *TeamDefault) GetAll() http.HandlerFunc {
 		// response
 
 		// deserialize teams to TeamAsJSON
-		data := make([]TeamAsJSON, len(teams))
+		data := make([]team_helper.TeamAsJSON, len(teams))
 		for i, team := range teams {
-			data[i] = TeamAsJSON{
+			data[i] = team_helper.TeamAsJSON{
 				ID:   team.ID,
 				Name: team.Name,
 			}
@@ -82,7 +74,7 @@ func (h *TeamDefault) GetByID() http.HandlerFunc {
 		}
 
 		// response
-		data := TeamAsJSON{
+		data := team_helper.TeamAsJSON{
 			ID:   team.ID,
 			Name: team.Name,
 		}
@@ -112,7 +104,7 @@ func (h *TeamDefault) Create() http.HandlerFunc {
 		}
 
 		// process
-		var body TeamAsBodyJSON
+		var body team_helper.TeamAsBodyJSON
 		err = json.Unmarshal(requestBody, &body)
 		if err != nil {
 			util.ResponseError(w, http.StatusUnprocessableEntity, "Invalid team body")
@@ -144,7 +136,7 @@ func (h *TeamDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := TeamAsJSON{
+		data := team_helper.TeamAsJSON{
 			ID:   team.ID,
 			Name: team.Name,
 		}
@@ -177,7 +169,7 @@ func (h *TeamDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		teamBody := TeamAsJSON{
+		teamBody := team_helper.TeamAsJSON{
 			ID:   team.ID,
 			Name: team.Name,
 		}
@@ -205,7 +197,7 @@ func (h *TeamDefault) Update() http.HandlerFunc {
 
 		// response
 
-		data := TeamAsJSON{
+		data := team_helper.TeamAsJSON{
 			ID:   team.ID,
 			Name: team.Name,
 		}
