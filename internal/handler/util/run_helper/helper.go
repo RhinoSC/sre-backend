@@ -51,15 +51,15 @@ type RunMetadataAsJSON struct {
 }
 
 type RunAsJSON struct {
-	ID             string            `json:"id"`
-	Name           string            `json:"name"`
-	StartTimeMili  int64             `json:"start_time_mili"`
-	EstimateString string            `json:"estimate_string"`
-	EstimateMili   int64             `json:"estimate_mili"`
-	RunMetadata    RunMetadataAsJSON `json:"run_metadata"`
-	RunTeams       []RunTeamsAsJSON  `json:"teams,omitempty"`
-	Bids           []RunBidsAsJSON   `json:"bids,omitempty"`
-	ScheduleId     string            `json:"schedule_id"`
+	ID             string             `json:"id"`
+	Name           string             `json:"name,omitempty"`
+	StartTimeMili  int64              `json:"start_time_mili,omitempty"`
+	EstimateString string             `json:"estimate_string,omitempty"`
+	EstimateMili   int64              `json:"estimate_mili,omitempty"`
+	RunMetadata    *RunMetadataAsJSON `json:"run_metadata,omitempty"`
+	RunTeams       []RunTeamsAsJSON   `json:"teams,omitempty"`
+	Bids           []RunBidsAsJSON    `json:"bids,omitempty"`
+	ScheduleId     string             `json:"schedule_id,omitempty"`
 }
 
 type RunMetadataAsBodyJSON struct {
@@ -105,6 +105,11 @@ type RunAsBodyJSON struct {
 	ScheduleId     string                `json:"schedule_id" validate:"required"`
 }
 
+type RunAsOrderBodyJSON struct {
+	ID            string `json:"id" validate:"required"`
+	StartTimeMili int64  `json:"start_time_mili" validate:"required"`
+}
+
 func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
 	runJSON = RunAsJSON{
 		ID:             run.ID,
@@ -112,7 +117,7 @@ func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
 		StartTimeMili:  run.StartTimeMili,
 		EstimateString: run.EstimateString,
 		EstimateMili:   run.EstimateMili,
-		RunMetadata: RunMetadataAsJSON{
+		RunMetadata: &RunMetadataAsJSON{
 			Category:       run.RunMetadata.Category,
 			Platform:       run.RunMetadata.Platform,
 			TwitchGameName: run.RunMetadata.TwitchGameName,

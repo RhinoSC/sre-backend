@@ -8,17 +8,19 @@ import (
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
+	"github.com/RhinoSC/sre-backend/internal/handler/util/run_helper"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
 
 type ScheduleAsJSON struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	Start_time_mili int64  `json:"start_time_mili"`
-	End_time_mili   int64  `json:"end_time_mili"`
-	EventID         string `json:"event_id"`
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	Start_time_mili int64                  `json:"start_time_mili"`
+	End_time_mili   int64                  `json:"end_time_mili"`
+	EventID         string                 `json:"event_id"`
+	Runs            []run_helper.RunAsJSON `json:"runs"`
 }
 
 type ScheduleAsBodyJSON struct {
@@ -54,12 +56,23 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 		// deserialize schedules to ScheduleAsJSON
 		data := make([]ScheduleAsJSON, len(schedules))
 		for i, schedule := range schedules {
+
+			var runsAsJSON []run_helper.RunAsJSON
+
+			for _, run := range schedule.Runs {
+				runJSON := run_helper.RunAsJSON{
+					ID: run.ID,
+				}
+				runsAsJSON = append(runsAsJSON, runJSON)
+			}
+
 			data[i] = ScheduleAsJSON{
 				ID:              schedule.ID,
 				Name:            schedule.Name,
 				Start_time_mili: schedule.Start_time_mili,
 				End_time_mili:   schedule.End_time_mili,
 				EventID:         schedule.EventID,
+				Runs:            runsAsJSON,
 			}
 		}
 
@@ -90,6 +103,14 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 			return
 		}
 
+		// convert runs to JSON
+		var runsAsJSON []run_helper.RunAsJSON
+
+		for _, run := range schedule.Runs {
+			runJSON := run_helper.ConvertRunToJSON(run)
+			runsAsJSON = append(runsAsJSON, runJSON)
+		}
+
 		// response
 		data := ScheduleAsJSON{
 			ID:              schedule.ID,
@@ -97,6 +118,7 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 			Start_time_mili: schedule.Start_time_mili,
 			End_time_mili:   schedule.End_time_mili,
 			EventID:         schedule.EventID,
+			Runs:            runsAsJSON,
 		}
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{

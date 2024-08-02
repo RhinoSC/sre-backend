@@ -3,10 +3,12 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"sort"
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
 	"github.com/RhinoSC/sre-backend/internal/handler/util/run_helper"
+	"github.com/RhinoSC/sre-backend/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
@@ -343,5 +345,69 @@ func (h *RunDefault) Delete() http.HandlerFunc {
 		// response
 
 		util.ResponseJSON(w, http.StatusNoContent, nil)
+	}
+}
+
+func (h *RunDefault) UpdateRunOrder() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+
+		var body []run_helper.RunAsOrderBodyJSON
+		err := util.RequestJSON(r, &body)
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		// process
+
+		validate := validator.New()
+		for _, bodyRun := range body {
+			err = validate.Struct(bodyRun)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				util.ResponseError(w, http.StatusBadRequest, "Invalid request body")
+				return
+			}
+		}
+
+		var runs []internal.Run
+
+		for _, bodyRun := range body {
+			run := internal.Run{
+				ID:            bodyRun.ID,
+				StartTimeMili: bodyRun.StartTimeMili,
+			}
+
+			runs = append(runs, run)
+		}
+
+		err = h.sv.UpdateRunOrder(runs)
+		if err != nil {
+			switch {
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		// response
+
+		sort.Slice(runs, func(i, j int) bool {
+			return runs[i].StartTimeMili < runs[j].StartTimeMili
+		})
+
+		var data []run_helper.RunAsOrderBodyJSON
+		for _, run := range runs {
+			data = append(data, run_helper.RunAsOrderBodyJSON{
+				ID:            run.ID,
+				StartTimeMili: run.StartTimeMili,
+			})
+		}
+
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
 	}
 }

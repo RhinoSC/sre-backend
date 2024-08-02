@@ -629,3 +629,32 @@ func (r *RunSqlite) Delete(id string) (err error) {
 
 	return
 }
+
+func (r *RunSqlite) UpdateRunOrder(runs []internal.Run) (err error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return
+	}
+
+	stmt, err := tx.Prepare("UPDATE runs SET start_time_mili = ? WHERE id = ?")
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	defer stmt.Close()
+
+	for _, run := range runs {
+		_, err := stmt.Exec(run.StartTimeMili, run.ID)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return
+}

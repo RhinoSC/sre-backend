@@ -55,6 +55,8 @@ type RunRepository interface {
 	Update(run *Run) error
 
 	Delete(id string) error
+
+	UpdateRunOrder(runs []Run) error
 }
 
 type RunService interface {
@@ -67,4 +69,6 @@ type RunService interface {
 	Update(run *Run) error
 
 	Delete(id string) error
+
+	UpdateRunOrder(runs []Run) error
 }
