@@ -29,6 +29,7 @@ type Run struct {
 	StartTimeMili  int64
 	EstimateString string
 	EstimateMili   int64
+	SetupTimeMili  int64
 	RunMetadata
 	Teams      []RunTeams
 	Bids       []Bid

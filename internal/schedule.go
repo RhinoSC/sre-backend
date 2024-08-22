@@ -7,6 +7,7 @@ type Schedule struct {
 	Name            string
 	Start_time_mili int64
 	End_time_mili   int64
+	Setup_time_mili int64
 	EventID         string
 	Runs            []Run
 }

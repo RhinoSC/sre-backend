@@ -20,7 +20,7 @@ func NewScheduleSqlite(db *sql.DB) *ScheduleSqlite {
 func (r *ScheduleSqlite) FindAll() (schedules []internal.Schedule, err error) {
 	rows, err := r.db.Query(`
 			SELECT 
-					s.id, s.name, s.start_time_mili, s.end_time_mili, s.event_id, r.id
+					s.id, s.name, s.start_time_mili, s.end_time_mili, s.setup_time_mili, s.event_id, r.id
 			FROM 
 					schedules AS s 
 			LEFT JOIN 
@@ -39,10 +39,10 @@ func (r *ScheduleSqlite) FindAll() (schedules []internal.Schedule, err error) {
 	for rows.Next() {
 		var scheduleID, runID sql.NullString
 		var scheduleName sql.NullString
-		var scheduleStartTimeMili, scheduleEndTimeMili sql.NullInt64
+		var scheduleStartTimeMili, scheduleEndTimeMili, scheduleSetupTimeMilli sql.NullInt64
 		var scheduleEventID sql.NullString
 
-		err = rows.Scan(&scheduleID, &scheduleName, &scheduleStartTimeMili, &scheduleEndTimeMili, &scheduleEventID, &runID)
+		err = rows.Scan(&scheduleID, &scheduleName, &scheduleStartTimeMili, &scheduleEndTimeMili, &scheduleSetupTimeMilli, &scheduleEventID, &runID)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
@@ -55,6 +55,7 @@ func (r *ScheduleSqlite) FindAll() (schedules []internal.Schedule, err error) {
 				Name:            scheduleName.String,
 				Start_time_mili: scheduleStartTimeMili.Int64,
 				End_time_mili:   scheduleEndTimeMili.Int64,
+				Setup_time_mili: scheduleSetupTimeMilli.Int64,
 				EventID:         scheduleEventID.String,
 				Runs:            []internal.Run{},
 			}
@@ -82,9 +83,9 @@ func (r *ScheduleSqlite) FindAll() (schedules []internal.Schedule, err error) {
 }
 
 func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err error) {
-	row := r.db.QueryRow("SELECT s.`id`, s.`name`, s.`start_time_mili`, s.`end_time_mili`, s.`event_id` FROM `schedules` AS `s` WHERE s.`id` == ?;", id)
+	row := r.db.QueryRow("SELECT s.`id`, s.`name`, s.`start_time_mili`, s.`end_time_mili`, s.`setup_time_mili`, s.`event_id` FROM `schedules` AS `s` WHERE s.`id` == ?;", id)
 
-	err = row.Scan(&schedule.ID, &schedule.Name, &schedule.Start_time_mili, &schedule.End_time_mili, &schedule.EventID)
+	err = row.Scan(&schedule.ID, &schedule.Name, &schedule.Start_time_mili, &schedule.End_time_mili, &schedule.Setup_time_mili, &schedule.EventID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = internal.ErrScheduleRepositoryNotFound
@@ -98,7 +99,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 
 	// Query for the runs
 	rows, err := r.db.Query(`
-	SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, 
+	SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili,
 		rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
@@ -140,7 +141,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
-		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
+		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
 			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {
@@ -229,7 +230,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 }
 
 func (r *ScheduleSqlite) Save(schedule *internal.Schedule) (err error) {
-	_, err = r.db.Exec("INSERT INTO `schedules` (`id`, `name`, `start_time_mili`, `end_time_mili`, `event_id`) VALUES (?, ?, ?, ?, ?)", schedule.ID, schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.EventID)
+	_, err = r.db.Exec("INSERT INTO `schedules` (`id`, `name`, `start_time_mili`, `end_time_mili`, `setup_time_mili`, `event_id`) VALUES (?, ?, ?, ?, ?, ?)", schedule.ID, schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -248,7 +249,7 @@ func (r *ScheduleSqlite) Save(schedule *internal.Schedule) (err error) {
 }
 
 func (r *ScheduleSqlite) Update(schedule *internal.Schedule) (err error) {
-	_, err = r.db.Exec("UPDATE `schedules` SET `name` = ?, `start_time_mili` = ?, `end_time_mili` = ?, `event_id` = ? WHERE `id` = ?;", schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.EventID, schedule.ID)
+	_, err = r.db.Exec("UPDATE `schedules` SET `name` = ?, `start_time_mili` = ?, `end_time_mili` = ?, `setup_time_mili` = ?, `event_id` = ? WHERE `id` = ?;", schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID, schedule.ID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {

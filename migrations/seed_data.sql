@@ -3,16 +3,16 @@ INSERT INTO events (id, name, start_time_mili, end_time_mili) VALUES
 ('event1', 'Charity Marathon', 1677830400000, 1677916800000);
 
 -- Insertar datos en la tabla 'schedules'
-INSERT INTO schedules (id, name, start_time_mili, end_time_mili, event_id) VALUES
-('schedule1', 'Morning Session', 1677830400000, 1677834000000, 'event1');
+INSERT INTO schedules (id, name, start_time_mili, end_time_mili, setup_time_mili, event_id) VALUES
+('schedule1', 'Morning Session', 1677830400000, 1677834000000, 300000, 'event1');
 
 -- Insertar datos de prueba en la tabla runs
-INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, schedule_id) VALUES
-('run1', 'Speedrun 1', 1000, '2h', 7200000, 'schedule1'),
-('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 'schedule2'),
-('run4', 'Speedrun 12', 2020, '3h', 10800000, 'schedule1'),
-('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 'schedule2'),
-('run6', 'Speedrun 14', 4040, '5h', 18000000, 'schedule2');
+INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, setup_time_mili, schedule_id) VALUES
+('run1', 'Speedrun 1', 1000, '2h', 7200000, 300000, 'schedule1'),
+('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 300000, 'schedule2'),
+('run4', 'Speedrun 12', 2020, '3h', 10800000, 300000, 'schedule1'),
+('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 300000, 'schedule2'),
+('run6', 'Speedrun 14', 4040, '5h', 18000000, 300000, 'schedule2');
 
 -- Insertar datos de prueba en la tabla run_metadata
 INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, run_name, note) VALUES
@@ -54,7 +54,7 @@ INSERT INTO user_socials (id, user_id, twitch, twitter, youtube, facebook) VALUE
 
 -- Insertar datos de prueba en la tabla admins
 INSERT INTO admins (id, username, password, created_at) VALUES
-('admin1', 'admin', 'admin', datetime('now'));
+('admin1', 'admin', '$2a$10$u8fl6qTAR.Fd/ZmGZqJYm.dihtVBcXw/WCuXB/ZkmP8gvqDgqSMmG', datetime('now'));
 
 -- Insertar datos de prueba en la tabla prizes
 INSERT INTO prizes (id, name, description, url, min_amount, status, international_delivery, event_id) VALUES

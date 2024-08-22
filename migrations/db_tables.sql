@@ -30,6 +30,7 @@ CREATE TABLE schedules (
     name VARCHAR(255) NOT NULL,
     start_time_mili NUMERIC NOT NULL,
     end_time_mili NUMERIC NOT NULL,
+    setup_time_mili NUMERIC NOT NULL,
     event_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
@@ -41,6 +42,7 @@ CREATE TABLE runs (
     start_time_mili NUMERIC NOT NULL,
     estimate_string VARCHAR(255),
     estimate_mili NUMERIC,
+    setup_time_mili NUMERIC NOT NULL,
     schedule_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
 );

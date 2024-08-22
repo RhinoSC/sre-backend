@@ -19,6 +19,7 @@ type ScheduleAsJSON struct {
 	Name            string                 `json:"name"`
 	Start_time_mili int64                  `json:"start_time_mili"`
 	End_time_mili   int64                  `json:"end_time_mili"`
+	Setup_time_mili int64                  `json:"setup_time_mili"`
 	EventID         string                 `json:"event_id"`
 	Runs            []run_helper.RunAsJSON `json:"runs"`
 }
@@ -27,6 +28,7 @@ type ScheduleAsBodyJSON struct {
 	Name            string `json:"name" validate:"required"`
 	Start_time_mili int64  `json:"start_time_mili" validate:"required"`
 	End_time_mili   int64  `json:"end_time_mili" validate:"required"`
+	Setup_time_mili int64  `json:"setup_time_mili" validate:"required"`
 	EventID         string `json:"event_id" validate:"required"`
 }
 
@@ -71,6 +73,7 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 				Name:            schedule.Name,
 				Start_time_mili: schedule.Start_time_mili,
 				End_time_mili:   schedule.End_time_mili,
+				Setup_time_mili: schedule.Setup_time_mili,
 				EventID:         schedule.EventID,
 				Runs:            runsAsJSON,
 			}
@@ -117,6 +120,7 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 			Name:            schedule.Name,
 			Start_time_mili: schedule.Start_time_mili,
 			End_time_mili:   schedule.End_time_mili,
+			Setup_time_mili: schedule.Setup_time_mili,
 			EventID:         schedule.EventID,
 			Runs:            runsAsJSON,
 		}
@@ -165,6 +169,7 @@ func (h *ScheduleDefault) Create() http.HandlerFunc {
 			Name:            body.Name,
 			Start_time_mili: body.Start_time_mili,
 			End_time_mili:   body.End_time_mili,
+			Setup_time_mili: body.Setup_time_mili,
 			EventID:         body.EventID,
 		}
 
@@ -186,6 +191,7 @@ func (h *ScheduleDefault) Create() http.HandlerFunc {
 			Name:            schedule.Name,
 			Start_time_mili: schedule.Start_time_mili,
 			End_time_mili:   schedule.End_time_mili,
+			Setup_time_mili: schedule.Setup_time_mili,
 			EventID:         schedule.EventID,
 		}
 
@@ -222,6 +228,7 @@ func (h *ScheduleDefault) Update() http.HandlerFunc {
 			Name:            schedule.Name,
 			Start_time_mili: schedule.Start_time_mili,
 			End_time_mili:   schedule.End_time_mili,
+			Setup_time_mili: schedule.Setup_time_mili,
 			EventID:         schedule.EventID,
 		}
 
@@ -235,6 +242,7 @@ func (h *ScheduleDefault) Update() http.HandlerFunc {
 			Name:            scheduleBody.Name,
 			Start_time_mili: scheduleBody.Start_time_mili,
 			End_time_mili:   scheduleBody.End_time_mili,
+			Setup_time_mili: scheduleBody.Setup_time_mili,
 			EventID:         scheduleBody.EventID,
 		}
 
@@ -256,6 +264,7 @@ func (h *ScheduleDefault) Update() http.HandlerFunc {
 			Name:            schedule.Name,
 			Start_time_mili: schedule.Start_time_mili,
 			End_time_mili:   schedule.End_time_mili,
+			Setup_time_mili: schedule.Setup_time_mili,
 			EventID:         schedule.EventID,
 		}
 

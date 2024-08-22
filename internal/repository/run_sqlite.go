@@ -61,7 +61,7 @@ func NewRunSqlite(db *sql.DB) *RunSqlite {
 func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	query := `
 	SELECT 
-		r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, 
+		r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili
 		rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
@@ -92,14 +92,14 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	for rows.Next() {
 		var runID, teamID, userID, bidID, bidOptionID sql.NullString
 		var runName, teamName, userName, userUsername, socialsID, twitch, twitter, youtube, facebook sql.NullString
-		var startTimeMili, estimateMili sql.NullInt64
+		var startTimeMili, estimateMili, setupTimeMili sql.NullInt64
 		var estimateString, category, platform, twitchGameName, note, scheduleID sql.NullString
 		var bidName, bidDescription, bidType, bidOptionName sql.NullString
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
 		err = rows.Scan(
-			&runID, &runName, &startTimeMili, &estimateString, &estimateMili, &category, &platform, &twitchGameName, &note, &scheduleID,
+			&runID, &runName, &startTimeMili, &estimateString, &estimateMili, &setupTimeMili, &category, &platform, &twitchGameName, &note, &scheduleID,
 			&teamID, &teamName,
 			&userID, &userName, &userUsername,
 			&socialsID, &twitch, &twitter, &youtube, &facebook,
@@ -119,6 +119,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 				StartTimeMili:  startTimeMili.Int64,
 				EstimateString: estimateString.String,
 				EstimateMili:   estimateMili.Int64,
+				SetupTimeMili:  setupTimeMili.Int64,
 				RunMetadata: internal.RunMetadata{
 					ID:             runID.String,
 					RunID:          runID.String,
@@ -217,7 +218,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 }
 
 func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
-	query := `SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, 
+	query := `SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili 
 						rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
 						t.id AS team_id, t.name AS team_name,
 						u.id AS user_id, u.name AS user_name, u.username AS user_username,
@@ -257,7 +258,7 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
-		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
+		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
 			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {
@@ -357,7 +358,7 @@ func (r *RunSqlite) Save(run *internal.Run) (err error) {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec("INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, schedule_id) VALUES (?, ?, ?, ?, ?, ?);", run.ID, run.Name, run.StartTimeMili, run.EstimateString, run.EstimateMili, run.ScheduleId)
+	_, err = tx.Exec("INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, setup_time_mili, schedule_id) VALUES (?, ?, ?, ?, ?, ?, ?);", run.ID, run.Name, run.StartTimeMili, run.EstimateString, run.EstimateMili, run.SetupTimeMili, run.ScheduleId)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -459,7 +460,7 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 	defer tx.Rollback()
 
 	// Actualizar la entidad Run
-	_, err = tx.Exec("UPDATE runs SET name = ?, start_time_mili = ?, estimate_string = ?, estimate_mili = ?, schedule_id = ? WHERE id = ?;", run.Name, run.StartTimeMili, run.EstimateString, run.EstimateMili, run.ScheduleId, run.ID)
+	_, err = tx.Exec("UPDATE runs SET name = ?, start_time_mili = ?, estimate_string = ?, estimate_mili = ?, setup_time_mili = ?, schedule_id = ? WHERE id = ?;", run.Name, run.StartTimeMili, run.EstimateString, run.EstimateMili, run.SetupTimeMili, run.ScheduleId, run.ID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
