@@ -100,6 +100,8 @@ func (h *RunDefault) Create() http.HandlerFunc {
 			StartTimeMili:  body.StartTimeMili,
 			EstimateString: body.EstimateString,
 			EstimateMili:   body.EstimateMili,
+			SetupTimeMili:  body.SetupTimeMili,
+			Status:         body.Status,
 			RunMetadata: internal.RunMetadata{
 				ID:             runMetadataID,
 				RunID:          runID,
@@ -224,6 +226,8 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		run.StartTimeMili = body.StartTimeMili
 		run.EstimateString = body.EstimateString
 		run.EstimateMili = body.EstimateMili
+		run.SetupTimeMili = body.SetupTimeMili
+		run.Status = body.Status
 		run.RunMetadata.Category = body.RunMetadata.Category
 		run.RunMetadata.Platform = body.RunMetadata.Platform
 		run.RunMetadata.TwitchGameName = body.RunMetadata.TwitchGameName

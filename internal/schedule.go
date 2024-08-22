@@ -10,6 +10,8 @@ type Schedule struct {
 	Setup_time_mili int64
 	EventID         string
 	Runs            []Run
+	OrderedRuns     []Run
+	BackupRuns      []Run
 }
 
 var (

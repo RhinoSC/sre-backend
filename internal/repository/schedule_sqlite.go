@@ -95,11 +95,10 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	}
 
 	var run internal.Run
-	var runs []internal.Run
 
 	// Query for the runs
 	rows, err := r.db.Query(`
-	SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili,
+	SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili, r.status,
 		rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
@@ -127,7 +126,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	var teams []internal.RunTeams
 	var bids []internal.Bid
 	bidMap := make(map[string]*internal.Bid)
-	runMap := make(map[string]*internal.Run)
+	runMap := make(map[string]internal.Run)
 
 	for rows.Next() {
 		var team internal.RunTeams
@@ -141,7 +140,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
-		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
+		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
 			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {
@@ -150,6 +149,12 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 			}
 			logger.Log.Error(err.Error())
 			return
+		}
+
+		// Inicializar variables para una nueva run si es necesario
+		if _, exists := runMap[run.ID]; !exists {
+			teams = []internal.RunTeams{}
+			bids = []internal.Bid{}
 		}
 
 		if teamID.Valid {
@@ -219,13 +224,34 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		run.Bids = bids
 
 		if _, exists := runMap[run.ID]; !exists {
-			runMap[run.ID] = &run
-			runs = append(runs, run)
+			runMap[run.ID] = run
+		}
+
+	}
+
+	if err = rows.Err(); err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+
+	var availableRuns []internal.Run
+	var orderedRuns []internal.Run
+	var backupRuns []internal.Run
+
+	for _, run := range runMap {
+		switch run.Status {
+		case "active":
+			orderedRuns = append(orderedRuns, run)
+		case "backup":
+			backupRuns = append(backupRuns, run)
+		default:
+			availableRuns = append(availableRuns, run)
 		}
 	}
 
-	schedule.Runs = runs
-
+	schedule.Runs = append(schedule.Runs, availableRuns...)
+	schedule.OrderedRuns = append(schedule.OrderedRuns, orderedRuns...)
+	schedule.BackupRuns = append(schedule.BackupRuns, backupRuns...)
 	return
 }
 

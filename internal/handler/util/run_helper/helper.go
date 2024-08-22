@@ -57,6 +57,7 @@ type RunAsJSON struct {
 	EstimateString string             `json:"estimate_string,omitempty"`
 	EstimateMili   int64              `json:"estimate_mili,omitempty"`
 	SetupTimeMili  int64              `json:"setup_time_mili,omitempty"`
+	Status         string             `json:"status,omitempty"`
 	RunMetadata    *RunMetadataAsJSON `json:"run_metadata,omitempty"`
 	RunTeams       []RunTeamsAsJSON   `json:"teams,omitempty"`
 	Bids           []RunBidsAsJSON    `json:"bids,omitempty"`
@@ -101,6 +102,7 @@ type RunAsBodyJSON struct {
 	EstimateString string                `json:"estimate_string" validate:"required"`
 	EstimateMili   int64                 `json:"estimate_mili" validate:"required"`
 	SetupTimeMili  int64                 `json:"setup_time_mili" validate:"required"`
+	Status         string                `json:"status"  validate:"required"`
 	RunMetadata    RunMetadataAsBodyJSON `json:"run_metadata" validate:"required"`
 	RunTeams       []RunTeamsAsBodyJSON  `json:"teams" validate:"required"`
 	Bids           []RunBidsAsBodyJSON   `json:"bids" validate:"required"`
@@ -120,6 +122,7 @@ func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
 		EstimateString: run.EstimateString,
 		EstimateMili:   run.EstimateMili,
 		SetupTimeMili:  run.SetupTimeMili,
+		Status:         run.Status,
 		RunMetadata: &RunMetadataAsJSON{
 			Category:       run.RunMetadata.Category,
 			Platform:       run.RunMetadata.Platform,

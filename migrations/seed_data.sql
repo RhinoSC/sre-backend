@@ -7,12 +7,12 @@ INSERT INTO schedules (id, name, start_time_mili, end_time_mili, setup_time_mili
 ('schedule1', 'Morning Session', 1677830400000, 1677834000000, 300000, 'event1');
 
 -- Insertar datos de prueba en la tabla runs
-INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, setup_time_mili, schedule_id) VALUES
-('run1', 'Speedrun 1', 1000, '2h', 7200000, 300000, 'schedule1'),
-('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 300000, 'schedule2'),
-('run4', 'Speedrun 12', 2020, '3h', 10800000, 300000, 'schedule1'),
-('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 300000, 'schedule2'),
-('run6', 'Speedrun 14', 4040, '5h', 18000000, 300000, 'schedule2');
+INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, setup_time_mili, status, schedule_id) VALUES
+('run1', 'Speedrun 1', 1000, '2h', 7200000, 300000, 'default', 'schedule1'),
+('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 300000, 'default', 'schedule2'),
+('run4', 'Speedrun 12', 2020, '3h', 10800000, 300000, 'active', 'schedule1'),
+('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 300000, 'default', 'schedule2'),
+('run6', 'Speedrun 14', 4040, '5h', 18000000, 300000, 'default', 'schedule2');
 
 -- Insertar datos de prueba en la tabla run_metadata
 INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, run_name, note) VALUES

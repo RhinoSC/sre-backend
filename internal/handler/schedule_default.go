@@ -22,6 +22,8 @@ type ScheduleAsJSON struct {
 	Setup_time_mili int64                  `json:"setup_time_mili"`
 	EventID         string                 `json:"event_id"`
 	Runs            []run_helper.RunAsJSON `json:"runs"`
+	OrderedRuns     []run_helper.RunAsJSON `json:"ordered_runs"`
+	BackupRuns      []run_helper.RunAsJSON `json:"backup_runs"`
 }
 
 type ScheduleAsBodyJSON struct {
@@ -60,12 +62,28 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 		for i, schedule := range schedules {
 
 			var runsAsJSON []run_helper.RunAsJSON
+			var backupRunsAsJSON []run_helper.RunAsJSON
+			var orderedRunsAsJSON []run_helper.RunAsJSON
 
 			for _, run := range schedule.Runs {
 				runJSON := run_helper.RunAsJSON{
 					ID: run.ID,
 				}
 				runsAsJSON = append(runsAsJSON, runJSON)
+			}
+
+			for _, run := range schedule.BackupRuns {
+				runJSON := run_helper.RunAsJSON{
+					ID: run.ID,
+				}
+				backupRunsAsJSON = append(backupRunsAsJSON, runJSON)
+			}
+
+			for _, run := range schedule.OrderedRuns {
+				runJSON := run_helper.RunAsJSON{
+					ID: run.ID,
+				}
+				orderedRunsAsJSON = append(orderedRunsAsJSON, runJSON)
 			}
 
 			data[i] = ScheduleAsJSON{
@@ -76,6 +94,8 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 				Setup_time_mili: schedule.Setup_time_mili,
 				EventID:         schedule.EventID,
 				Runs:            runsAsJSON,
+				OrderedRuns:     orderedRunsAsJSON,
+				BackupRuns:      backupRunsAsJSON,
 			}
 		}
 
@@ -108,10 +128,21 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 
 		// convert runs to JSON
 		var runsAsJSON []run_helper.RunAsJSON
+		var backupRunsAsJSON []run_helper.RunAsJSON
+		var orderedRunsAsJSON []run_helper.RunAsJSON
 
 		for _, run := range schedule.Runs {
 			runJSON := run_helper.ConvertRunToJSON(run)
 			runsAsJSON = append(runsAsJSON, runJSON)
+		}
+
+		for _, run := range schedule.BackupRuns {
+			runJSON := run_helper.ConvertRunToJSON(run)
+			backupRunsAsJSON = append(backupRunsAsJSON, runJSON)
+		}
+		for _, run := range schedule.OrderedRuns {
+			runJSON := run_helper.ConvertRunToJSON(run)
+			orderedRunsAsJSON = append(orderedRunsAsJSON, runJSON)
 		}
 
 		// response
@@ -123,6 +154,8 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 			Setup_time_mili: schedule.Setup_time_mili,
 			EventID:         schedule.EventID,
 			Runs:            runsAsJSON,
+			OrderedRuns:     orderedRunsAsJSON,
+			BackupRuns:      backupRunsAsJSON,
 		}
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
