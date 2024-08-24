@@ -3,6 +3,7 @@ package application
 import (
 	"database/sql"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/auth"
 	"github.com/RhinoSC/sre-backend/internal/handler"
 	"github.com/RhinoSC/sre-backend/internal/logger"
@@ -68,6 +70,21 @@ func (s *ServerChi) Run() (err error) {
 
 	// initialize logger
 	logger.InitializeLogger()
+
+	twitch := internal.Twitch{
+		ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
+		ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+		// ClientToken:  os.Getenv("TWITCH_TOKEN"),
+		ClientToken: "6ea8twk5fe9gfgat219r14h73eyips",
+	}
+
+	// initilize twitch
+	service.CreateFirstTime(&twitch)
+	// twitch.ClientToken, err = twitchService.GetToken()
+	// if err != nil {
+	// 	logger.Log.Error("Could get token from Twitch")
+	// }
+	// logger.Log.Info("Twitch token: ", twitch.ClientToken)
 
 	// Initialize JWT Auth
 	auth.Init(s.jwtSecret)
@@ -210,6 +227,10 @@ func buildRunRouter(router *chi.Router, db *sql.DB) {
 			r.Patch("/{id}", hd.Update())
 			r.Delete("/{id}", hd.Delete())
 			r.Post("/order", hd.UpdateRunOrder())
+
+			// Twitch
+			rt.Get("/twitch/categories", hd.FindTwitchCategories())
+			rt.Get("/twitch/game", hd.FindTwitchCategoryByID())
 		})
 	})
 }

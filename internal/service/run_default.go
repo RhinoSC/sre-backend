@@ -9,10 +9,12 @@ import (
 
 type RunDefault struct {
 	rp internal.RunRepository
+	ts internal.TwitchService
 }
 
 func NewRunDefault(rp internal.RunRepository) *RunDefault {
-	return &RunDefault{rp}
+	ts := GetTwitchInstance()
+	return &RunDefault{rp, ts}
 }
 
 func (s *RunDefault) FindAll() (runs []internal.Run, err error) {
@@ -87,6 +89,30 @@ func (s *RunDefault) UpdateRunOrder(runs []internal.Run) (err error) {
 		switch {
 		default:
 			err = fmt.Errorf("error updating runs order: %w", err)
+		}
+		return
+	}
+	return
+}
+
+func (s *RunDefault) FindTwitchCategories(name string) (categories []internal.TwitchCategory, err error) {
+	categories, err = s.ts.FindCategories(name)
+	if err != nil {
+		switch {
+		default:
+			err = fmt.Errorf("error finding twitch categories: %w", err)
+		}
+		return
+	}
+	return
+}
+
+func (s *RunDefault) FindTwitchCategoryByID(id int64) (categories []internal.TwitchCategoryByID, err error) {
+	categories, err = s.ts.FindCategoryById(id)
+	if err != nil {
+		switch {
+		default:
+			err = fmt.Errorf("error finding twitch categories: %w", err)
 		}
 		return
 	}

@@ -74,4 +74,8 @@ type RunService interface {
 	Delete(id string) error
 
 	UpdateRunOrder(runs []Run) error
+
+	FindTwitchCategories(name string) ([]TwitchCategory, error)
+
+	FindTwitchCategoryByID(id int64) ([]TwitchCategoryByID, error)
 }

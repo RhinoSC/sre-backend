@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"sort"
+	"strconv"
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
@@ -416,6 +417,68 @@ func (h *RunDefault) UpdateRunOrder() http.HandlerFunc {
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
 			"data":    data,
+		})
+	}
+}
+
+func (h *RunDefault) FindTwitchCategories() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+
+		name := r.URL.Query().Get("name")
+		if name == "" {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid name")
+			return
+		}
+
+		// process
+
+		categories, err := h.sv.FindTwitchCategories(name)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrRunServiceNotFound):
+				util.ResponseError(w, http.StatusNotFound, "Run not found")
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		// response
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    categories,
+		})
+	}
+}
+
+func (h *RunDefault) FindTwitchCategoryByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+
+		id, err := strconv.Atoi(r.URL.Query().Get("id"))
+		if err != nil {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid id")
+			return
+		}
+
+		// process
+
+		categories, err := h.sv.FindTwitchCategoryByID(int64(id))
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrRunServiceNotFound):
+				util.ResponseError(w, http.StatusNotFound, "Game not found")
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		// response
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    categories,
 		})
 	}
 }
