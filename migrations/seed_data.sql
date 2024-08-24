@@ -9,18 +9,18 @@ INSERT INTO schedules (id, name, start_time_mili, end_time_mili, setup_time_mili
 -- Insertar datos de prueba en la tabla runs
 INSERT INTO runs (id, name, start_time_mili, estimate_string, estimate_mili, setup_time_mili, status, schedule_id) VALUES
 ('run1', 'Speedrun 1', 1000, '2h', 7200000, 300000, 'default', 'schedule1'),
-('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 300000, 'default', 'schedule2'),
+('run2', 'Speedrun 2', 2000, '1h 30m', 5400000, 300000, 'default', 'schedule1'),
 ('run4', 'Speedrun 12', 2020, '3h', 10800000, 300000, 'active', 'schedule1'),
-('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 300000, 'default', 'schedule2'),
-('run6', 'Speedrun 14', 4040, '5h', 18000000, 300000, 'default', 'schedule2');
+('run5', 'Speedrun 13', 3030, '4h 30m', 16200000, 300000, 'default', 'schedule1'),
+('run6', 'Speedrun 14', 4040, '5h', 18000000, 300000, 'default', 'schedule1');
 
 -- Insertar datos de prueba en la tabla run_metadata
-INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, run_name, note) VALUES
-('metadata1', 'run1', 'Any%', 'PC', 'Game 1', 'Run 1', 'Note for Run 1'),
-('metadata2', 'run2', '100%', 'Console', 'Game 2', 'Run 2', 'Note for Run 2'),
-('metadata4', 'run4', 'Any%', 'PC', 'Super Mario Bros', 'Run 12', 'Note for Run 12'),
-('metadata5', 'run5', '100%', 'Console', 'Zelda', 'Run 13', 'Note for Run 13'),
-('metadata6', 'run6', 'All%', 'PC', 'Minecraft', 'Run 14', 'Note for Run 14');
+INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, twitch_game_id, run_name, note) VALUES
+('metadata1', 'run1', 'Any%', 'PC', 'Game 1', 33214, 'Run 1', 'Note for Run 1'),
+('metadata2', 'run2', '100%', 'Console', 'Game 2', 33214, 'Run 2', 'Note for Run 2'),
+('metadata4', 'run4', 'Any%', 'PC', 'Super Mario Bros', 509508, 'Run 12', 'Note for Run 12'),
+('metadata5', 'run5', '100%', 'Console', 'Zelda', 'Run 13', 33214, 'Note for Run 13'),
+('metadata6', 'run6', 'All%', 'PC', 'Minecraft', 'Run 14', 33214, 'Note for Run 14');
 
 -- Insertar datos en la tabla 'teams'
 INSERT INTO teams (id, name, run_id) VALUES

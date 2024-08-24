@@ -108,6 +108,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 				Category:       body.RunMetadata.Category,
 				Platform:       body.RunMetadata.Platform,
 				TwitchGameName: body.RunMetadata.TwitchGameName,
+				TwitchGameId:   body.RunMetadata.TwitchGameId,
 				RunName:        body.RunMetadata.RunName,
 				Note:           body.RunMetadata.Note,
 			},
@@ -231,6 +232,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		run.RunMetadata.Category = body.RunMetadata.Category
 		run.RunMetadata.Platform = body.RunMetadata.Platform
 		run.RunMetadata.TwitchGameName = body.RunMetadata.TwitchGameName
+		run.RunMetadata.TwitchGameId = body.RunMetadata.TwitchGameId
 		run.RunMetadata.RunName = body.RunMetadata.RunName
 		run.RunMetadata.Note = body.RunMetadata.Note
 		run.ScheduleId = body.ScheduleId
@@ -381,6 +383,7 @@ func (h *RunDefault) UpdateRunOrder() http.HandlerFunc {
 			run := internal.Run{
 				ID:            bodyRun.ID,
 				StartTimeMili: bodyRun.StartTimeMili,
+				Status:        bodyRun.Status,
 			}
 
 			runs = append(runs, run)
@@ -406,6 +409,7 @@ func (h *RunDefault) UpdateRunOrder() http.HandlerFunc {
 			data = append(data, run_helper.RunAsOrderBodyJSON{
 				ID:            run.ID,
 				StartTimeMili: run.StartTimeMili,
+				Status:        run.Status,
 			})
 		}
 

@@ -14,6 +14,16 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
+type ScheduleRunsJoinedAsJSON struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	Start_time_mili int64    `json:"start_time_mili"`
+	End_time_mili   int64    `json:"end_time_mili"`
+	Setup_time_mili int64    `json:"setup_time_mili"`
+	EventID         string   `json:"event_id"`
+	Runs            []string `json:"runs"`
+}
+
 type ScheduleAsJSON struct {
 	ID              string                 `json:"id"`
 	Name            string                 `json:"name"`
@@ -22,8 +32,8 @@ type ScheduleAsJSON struct {
 	Setup_time_mili int64                  `json:"setup_time_mili"`
 	EventID         string                 `json:"event_id"`
 	Runs            []run_helper.RunAsJSON `json:"runs"`
-	OrderedRuns     []run_helper.RunAsJSON `json:"ordered_runs"`
-	BackupRuns      []run_helper.RunAsJSON `json:"backup_runs"`
+	OrderedRuns     []run_helper.RunAsJSON `json:"ordered_runs,omitempty"`
+	BackupRuns      []run_helper.RunAsJSON `json:"backup_runs,omitempty"`
 }
 
 type ScheduleAsBodyJSON struct {
@@ -57,36 +67,25 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 
 		// response
 
-		// deserialize schedules to ScheduleAsJSON
-		data := make([]ScheduleAsJSON, len(schedules))
+		// deserialize schedules to ScheduleRunsJoinedAsJSON
+		data := make([]ScheduleRunsJoinedAsJSON, len(schedules))
 		for i, schedule := range schedules {
 
-			var runsAsJSON []run_helper.RunAsJSON
-			var backupRunsAsJSON []run_helper.RunAsJSON
-			var orderedRunsAsJSON []run_helper.RunAsJSON
+			var runsAsJSON []string
 
 			for _, run := range schedule.Runs {
-				runJSON := run_helper.RunAsJSON{
-					ID: run.ID,
-				}
-				runsAsJSON = append(runsAsJSON, runJSON)
+				runsAsJSON = append(runsAsJSON, run.ID)
 			}
 
 			for _, run := range schedule.BackupRuns {
-				runJSON := run_helper.RunAsJSON{
-					ID: run.ID,
-				}
-				backupRunsAsJSON = append(backupRunsAsJSON, runJSON)
+				runsAsJSON = append(runsAsJSON, run.ID)
 			}
 
 			for _, run := range schedule.OrderedRuns {
-				runJSON := run_helper.RunAsJSON{
-					ID: run.ID,
-				}
-				orderedRunsAsJSON = append(orderedRunsAsJSON, runJSON)
+				runsAsJSON = append(runsAsJSON, run.ID)
 			}
 
-			data[i] = ScheduleAsJSON{
+			data[i] = ScheduleRunsJoinedAsJSON{
 				ID:              schedule.ID,
 				Name:            schedule.Name,
 				Start_time_mili: schedule.Start_time_mili,
@@ -94,8 +93,6 @@ func (h *ScheduleDefault) GetAll() http.HandlerFunc {
 				Setup_time_mili: schedule.Setup_time_mili,
 				EventID:         schedule.EventID,
 				Runs:            runsAsJSON,
-				OrderedRuns:     orderedRunsAsJSON,
-				BackupRuns:      backupRunsAsJSON,
 			}
 		}
 

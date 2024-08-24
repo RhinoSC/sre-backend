@@ -46,6 +46,7 @@ type RunMetadataAsJSON struct {
 	Category       string `json:"category"`
 	Platform       string `json:"platform"`
 	TwitchGameName string `json:"twitch_game_name"`
+	TwitchGameId   int64  `json:"twitch_game_id"`
 	RunName        string `json:"run_name"`
 	Note           string `json:"note"`
 }
@@ -68,6 +69,7 @@ type RunMetadataAsBodyJSON struct {
 	Category       string `json:"category" validate:"required"`
 	Platform       string `json:"platform" validate:"required"`
 	TwitchGameName string `json:"twitch_game_name" validate:"required"`
+	TwitchGameId   int64  `json:"twitch_game_id" validate:"required"`
 	RunName        string `json:"run_name"`
 	Note           string `json:"note"`
 }
@@ -112,6 +114,7 @@ type RunAsBodyJSON struct {
 type RunAsOrderBodyJSON struct {
 	ID            string `json:"id" validate:"required"`
 	StartTimeMili int64  `json:"start_time_mili" validate:"required"`
+	Status        string `json:"status"  validate:"required"`
 }
 
 func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
@@ -127,6 +130,7 @@ func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
 			Category:       run.RunMetadata.Category,
 			Platform:       run.RunMetadata.Platform,
 			TwitchGameName: run.RunMetadata.TwitchGameName,
+			TwitchGameId:   run.RunMetadata.TwitchGameId,
 			RunName:        run.RunMetadata.RunName,
 			Note:           run.RunMetadata.Note,
 		},

@@ -62,7 +62,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	query := `
 	SELECT 
 		r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili, r.status,
-		rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
+		rm.category, rm.platform, rm.twitch_game_name, rm.twitch_game_id, rm.note, r.schedule_id,
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
 		um.id AS user_socials_id, um.twitch AS user_twitch, um.twitter AS user_twitter, um.youtube AS user_youtube, um.facebook AS user_facebook,
@@ -92,14 +92,14 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	for rows.Next() {
 		var runID, teamID, userID, bidID, bidOptionID, runStatus sql.NullString
 		var runName, teamName, userName, userUsername, socialsID, twitch, twitter, youtube, facebook sql.NullString
-		var startTimeMili, estimateMili, setupTimeMili sql.NullInt64
+		var startTimeMili, estimateMili, setupTimeMili, twitchGameId sql.NullInt64
 		var estimateString, category, platform, twitchGameName, note, scheduleID sql.NullString
 		var bidName, bidDescription, bidType, bidOptionName sql.NullString
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
 		err = rows.Scan(
-			&runID, &runName, &startTimeMili, &estimateString, &estimateMili, &setupTimeMili, &runStatus, &category, &platform, &twitchGameName, &note, &scheduleID,
+			&runID, &runName, &startTimeMili, &estimateString, &estimateMili, &setupTimeMili, &runStatus, &category, &platform, &twitchGameName, &twitchGameId, &note, &scheduleID,
 			&teamID, &teamName,
 			&userID, &userName, &userUsername,
 			&socialsID, &twitch, &twitter, &youtube, &facebook,
@@ -127,6 +127,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 					Category:       category.String,
 					Platform:       platform.String,
 					TwitchGameName: twitchGameName.String,
+					TwitchGameId:   twitchGameId.Int64,
 					Note:           note.String,
 				},
 				ScheduleId: scheduleID.String,
@@ -220,7 +221,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 
 func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 	query := `SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili, r.status,
-						rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
+						rm.category, rm.platform, rm.twitch_game_name, rm.twitch_game_id, rm.note, r.schedule_id,
 						t.id AS team_id, t.name AS team_name,
 						u.id AS user_id, u.name AS user_name, u.username AS user_username,
 						um.id AS user_socials_id, um.twitch AS user_twitch, um.twitter AS user_twitter, um.youtube AS user_youtube, um.facebook AS user_facebook,
@@ -259,7 +260,7 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
-		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
+		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.TwitchGameId, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
 			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {
@@ -374,7 +375,7 @@ func (r *RunSqlite) Save(run *internal.Run) (err error) {
 		}
 	}
 
-	_, err = tx.Exec("INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, run_name, note) VALUES (?, ?, ?, ?, ?, ?, ?);", run.ID, run.ID, run.RunMetadata.Category, run.RunMetadata.Platform, run.RunMetadata.TwitchGameName, run.RunMetadata.RunName, run.RunMetadata.Note)
+	_, err = tx.Exec("INSERT INTO run_metadata (id, run_id, category, platform, twitch_game_name, twitch_game_id, run_name, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", run.ID, run.ID, run.RunMetadata.Category, run.RunMetadata.Platform, run.RunMetadata.TwitchGameName, run.RunMetadata.TwitchGameId, run.RunMetadata.RunName, run.RunMetadata.Note)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -477,7 +478,7 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 	}
 
 	// Actualizar los metadatos de Run
-	_, err = tx.Exec("UPDATE run_metadata SET category = ?, platform = ?, twitch_game_name = ?, run_name = ?, note = ? WHERE run_id = ?;", run.RunMetadata.Category, run.RunMetadata.Platform, run.RunMetadata.TwitchGameName, run.RunMetadata.RunName, run.RunMetadata.Note, run.ID)
+	_, err = tx.Exec("UPDATE run_metadata SET category = ?, platform = ?, twitch_game_name = ?, twitch_game_id = ?, run_name = ?, note = ? WHERE run_id = ?;", run.RunMetadata.Category, run.RunMetadata.Platform, run.RunMetadata.TwitchGameName, run.RunMetadata.TwitchGameId, run.RunMetadata.RunName, run.RunMetadata.Note, run.ID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -638,7 +639,7 @@ func (r *RunSqlite) UpdateRunOrder(runs []internal.Run) (err error) {
 		return
 	}
 
-	stmt, err := tx.Prepare("UPDATE runs SET start_time_mili = ? WHERE id = ?")
+	stmt, err := tx.Prepare("UPDATE runs SET start_time_mili = ?, status = ? WHERE id = ?")
 	if err != nil {
 		tx.Rollback()
 		return
@@ -646,7 +647,7 @@ func (r *RunSqlite) UpdateRunOrder(runs []internal.Run) (err error) {
 	defer stmt.Close()
 
 	for _, run := range runs {
-		_, err := stmt.Exec(run.StartTimeMili, run.ID)
+		_, err := stmt.Exec(run.StartTimeMili, run.Status, run.ID)
 		if err != nil {
 			tx.Rollback()
 			return err

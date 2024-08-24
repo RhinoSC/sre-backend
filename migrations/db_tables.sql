@@ -55,6 +55,7 @@ CREATE TABLE run_metadata (
     category VARCHAR(255) NOT NULL,
     platform VARCHAR(255) NOT NULL,
     twitch_game_name VARCHAR(255),
+    twitch_game_id NUMERIC,
     run_name VARCHAR(255),
     note TEXT DEFAULT NULL,
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
