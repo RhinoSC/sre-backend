@@ -124,15 +124,12 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	defer rows.Close()
 
 	var teams []internal.RunTeams
-	var bids []internal.Bid
-	bidMap := make(map[string]*internal.Bid)
-	runMap := make(map[string]internal.Run)
+	var bidsMap = make(map[string]*internal.Bid)
+	var runs = make(map[string]internal.Run)
 
 	for rows.Next() {
 		var team internal.RunTeams
 		var player internal.RunTeamPlayers
-		var bid internal.Bid
-		var bidOption internal.BidOptions
 
 		var teamID, userID, bidID, bidOptionID sql.NullString
 		var teamName, userName, userUsername, socialsID, twitch, twitter, youtube, facebook sql.NullString
@@ -152,11 +149,11 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		}
 
 		// Inicializar variables para una nueva run si es necesario
-		if _, exists := runMap[run.ID]; !exists {
+		if _, exists := runs[run.ID]; !exists {
 			teams = []internal.RunTeams{}
-			bids = []internal.Bid{}
 		}
 
+		// Procesar equipos y jugadores
 		if teamID.Valid {
 			team.ID = teamID.String
 			team.Name = teamName.String
@@ -206,8 +203,9 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 
 		// Procesar bids y bid_options
 		if bidID.Valid {
-			if _, exists := bidMap[bidID.String]; !exists {
-				bid = internal.Bid{
+			bid, exists := bidsMap[bidID.String]
+			if !exists {
+				bid = &internal.Bid{
 					ID:               bidID.String,
 					Bidname:          bidName.String,
 					Goal:             bidGoal.Float64,
@@ -218,28 +216,49 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 					RunID:            run.ID,
 					BidOptions:       []internal.BidOptions{},
 				}
-				bidMap[bidID.String] = &bid
-				bids = append(bids, bid)
+				bidsMap[bidID.String] = bid
 			}
 
 			if bidOptionID.Valid {
-				option := internal.BidOptions{
-					ID:            bidOptionID.String,
-					Name:          bidOption.Name,
-					CurrentAmount: bidOptionCurrentAmount.Float64,
-					BidID:         bidID.String,
+				optionAlreadyExists := false
+				for _, option := range bid.BidOptions {
+					if option.ID == bidOptionID.String {
+						optionAlreadyExists = true
+						break
+					}
 				}
-				bidMap[bidID.String].BidOptions = append(bidMap[bidID.String].BidOptions, option)
+				if !optionAlreadyExists {
+					option := internal.BidOptions{
+						ID:            bidOptionID.String,
+						Name:          bidOptionName.String,
+						CurrentAmount: bidOptionCurrentAmount.Float64,
+						BidID:         bidID.String,
+					}
+					bid.BidOptions = append(bid.BidOptions, option)
+				}
 			}
 		}
 
-		run.Teams = teams
-		run.Bids = bids
-
-		if _, exists := runMap[run.ID]; !exists {
-			runMap[run.ID] = run
+		// Agregar bids a la lista de runs
+		if run.ID != "" {
+			if runData, exists := runs[run.ID]; exists {
+				// Reemplaza la run existente
+				runData.Teams = teams
+				runData.Bids = make([]internal.Bid, 0, len(bidsMap))
+				for _, bid := range bidsMap {
+					runData.Bids = append(runData.Bids, *bid)
+				}
+				runs[run.ID] = runData
+			} else {
+				// Agrega una nueva run
+				run.Teams = teams
+				run.Bids = make([]internal.Bid, 0, len(bidsMap))
+				for _, bid := range bidsMap {
+					run.Bids = append(run.Bids, *bid)
+				}
+				runs[run.ID] = run
+			}
 		}
-
 	}
 
 	if err = rows.Err(); err != nil {
@@ -251,7 +270,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	var orderedRuns []internal.Run
 	var backupRuns []internal.Run
 
-	for _, run := range runMap {
+	for _, run := range runs {
 		switch run.Status {
 		case "active":
 			orderedRuns = append(orderedRuns, run)

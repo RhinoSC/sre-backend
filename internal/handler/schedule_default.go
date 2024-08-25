@@ -129,16 +129,16 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 		var orderedRunsAsJSON []run_helper.RunAsJSON
 
 		for _, run := range schedule.Runs {
-			runJSON := run_helper.ConvertRunToJSON(run)
+			runJSON := run_helper.ConvertRunToJSON(run, true)
 			runsAsJSON = append(runsAsJSON, runJSON)
 		}
 
 		for _, run := range schedule.BackupRuns {
-			runJSON := run_helper.ConvertRunToJSON(run)
+			runJSON := run_helper.ConvertRunToJSON(run, true)
 			backupRunsAsJSON = append(backupRunsAsJSON, runJSON)
 		}
 		for _, run := range schedule.OrderedRuns {
-			runJSON := run_helper.ConvertRunToJSON(run)
+			runJSON := run_helper.ConvertRunToJSON(run, true)
 			orderedRunsAsJSON = append(orderedRunsAsJSON, runJSON)
 		}
 

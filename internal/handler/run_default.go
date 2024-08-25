@@ -25,6 +25,16 @@ func NewRunDefault(sv internal.RunService) *RunDefault {
 
 func (h *RunDefault) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		// request
+
+		details := r.URL.Query().Get("details")
+
+		withDetails := true
+		if details == "simple" {
+			withDetails = false
+		}
+
 		// process
 		runs, err := h.sv.FindAll()
 		if err != nil {
@@ -33,7 +43,7 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 		}
 
 		// response
-		data := run_helper.ConvertRunsArrayToJSON(runs)
+		data := run_helper.ConvertRunsArrayToJSON(runs, withDetails)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -64,7 +74,7 @@ func (h *RunDefault) GetByID() http.HandlerFunc {
 		}
 
 		// response
-		data := run_helper.ConvertRunToJSON(run)
+		data := run_helper.ConvertRunToJSON(run, true)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -142,11 +152,12 @@ func (h *RunDefault) Create() http.HandlerFunc {
 			bid := internal.Bid{
 				ID:               bidID,
 				Bidname:          bidBody.Bidname,
-				Goal:             bidBody.Goal,
-				CurrentAmount:    bidBody.CurrentAmount,
+				Goal:             *bidBody.Goal,
+				CurrentAmount:    *bidBody.CurrentAmount,
 				Description:      bidBody.Description,
 				Type:             bidBody.Type,
 				CreateNewOptions: bidBody.CreateNewOptions,
+				Status:           bidBody.Status,
 				RunID:            runID,
 				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
 			}
@@ -178,7 +189,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := run_helper.ConvertRunToJSON(run)
+		data := run_helper.ConvertRunToJSON(run, true)
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
@@ -327,7 +338,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 
 		// Response
 
-		data := run_helper.ConvertRunToJSON(run)
+		data := run_helper.ConvertRunToJSON(run, true)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",

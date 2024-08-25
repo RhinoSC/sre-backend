@@ -78,7 +78,7 @@ func (r *PrizeSqlite) Save(prize *internal.Prize) (err error) {
 }
 
 func (r *PrizeSqlite) Update(prize *internal.Prize) (err error) {
-	_, err = r.db.Exec("UPDATE `prizes` SET `name` = ?, `description` = ?, `url` = ?, `min_amount` = ?, `status` = ?, `international_delivery` = ?, `event_id` = ? WHERE `id` = ?;", prize.ID, prize.Name, prize.Description, prize.Url, prize.MinAmount, prize.Status, prize.InternationalDelivery, prize.EventID)
+	_, err = r.db.Exec("UPDATE `prizes` SET `name` = ?, `description` = ?, `url` = ?, `min_amount` = ?, `status` = ?, `international_delivery` = ?, `event_id` = ? WHERE `id` = ?;", prize.Name, prize.Description, prize.Url, prize.MinAmount, prize.Status, prize.InternationalDelivery, prize.EventID, prize.ID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {

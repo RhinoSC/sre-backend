@@ -41,8 +41,8 @@ type BidAsJSON struct {
 
 type BidAsBodyJSON struct {
 	Bidname          string            `json:"bidname" validate:"required"`
-	Goal             float64           `json:"goal" validate:"required"`
-	CurrentAmount    float64           `json:"current_amount"`
+	Goal             *float64          `json:"goal" validate:"required"`
+	CurrentAmount    *float64          `json:"current_amount"`
 	Description      string            `json:"description" validate:"required"`
 	Type             internal.BidType  `json:"type" validate:"required"`
 	CreateNewOptions bool              `json:"create_new_options"`
@@ -212,8 +212,8 @@ func (h *BidDefault) Create() http.HandlerFunc {
 		bid := internal.Bid{
 			ID:               BidID,
 			Bidname:          body.Bidname,
-			Goal:             body.Goal,
-			CurrentAmount:    body.CurrentAmount,
+			Goal:             *body.Goal,
+			CurrentAmount:    *body.CurrentAmount,
 			Description:      body.Description,
 			Type:             body.Type,
 			CreateNewOptions: body.CreateNewOptions,
