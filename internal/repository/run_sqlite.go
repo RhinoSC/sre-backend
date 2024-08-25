@@ -160,13 +160,27 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 						},
 					},
 				}
+
 				team.Players = append(team.Players, player)
 			}
 
 			teamFound := false
 			for i := range runPtr.Teams {
 				if runPtr.Teams[i].ID == team.ID {
-					runPtr.Teams[i].Players = append(runPtr.Teams[i].Players, team.Players...)
+					// Mapa para evitar jugadores duplicados
+					existingPlayers := make(map[string]bool)
+					for _, player := range runPtr.Teams[i].Players {
+						existingPlayers[player.UserID] = true
+					}
+
+					// Añadir nuevos jugadores solo si no están ya en el equipo
+					for _, newPlayer := range team.Players {
+						if !existingPlayers[newPlayer.UserID] {
+							runPtr.Teams[i].Players = append(runPtr.Teams[i].Players, newPlayer)
+							existingPlayers[newPlayer.UserID] = true
+						}
+					}
+
 					teamFound = true
 					break
 				}
@@ -514,7 +528,7 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 	// Insertar o actualizar equipos y jugadores
 	for _, team := range run.Teams {
 		// Insertar o actualizar el equipo
-		_, err = tx.Exec("INSERT INTO teams (id, name, run_id) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name;", team.ID, team.Name, run.ID)
+		_, err = tx.Exec("INSERT INTO teams (id, name, run_id) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name;", team.ID, team.Name, run.ID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {

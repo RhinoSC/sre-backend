@@ -181,7 +181,20 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 			teamFound := false
 			for i := range teams {
 				if teams[i].ID == team.ID {
-					teams[i].Players = append(teams[i].Players, player)
+					// Mapa para evitar jugadores duplicados
+					existingPlayers := make(map[string]bool)
+					for _, player := range teams[i].Players {
+						existingPlayers[player.UserID] = true
+					}
+
+					// Añadir nuevos jugadores solo si no están ya en el equipo
+					for _, newPlayer := range team.Players {
+						if !existingPlayers[newPlayer.UserID] {
+							teams[i].Players = append(teams[i].Players, newPlayer)
+							existingPlayers[newPlayer.UserID] = true
+						}
+					}
+
 					teamFound = true
 					break
 				}

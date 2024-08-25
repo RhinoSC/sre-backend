@@ -241,9 +241,14 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		// Procesar equipos y jugadores
 		teams := make([]internal.RunTeams, len(body.RunTeams))
 		for i, teamBody := range body.RunTeams {
-			teamID := run.Teams[i].ID
-			if teamID == "" {
+			var teamID string
+			if i >= len(run.Teams) {
 				teamID = uuid.NewString()
+			} else {
+				teamID = run.Teams[i].ID
+				if teamID == "" {
+					teamID = uuid.NewString()
+				}
 			}
 			team := internal.RunTeams{
 				ID:      teamID,
@@ -265,9 +270,14 @@ func (h *RunDefault) Update() http.HandlerFunc {
 		// Procesar bids y bid_options
 		bids := make([]internal.Bid, len(body.Bids))
 		for i, bidBody := range body.Bids {
-			bidID := run.Bids[i].ID
-			if bidID == "" {
+			var bidID string
+			if i >= len(run.Bids) {
 				bidID = uuid.NewString()
+			} else {
+				bidID = run.Bids[i].ID
+				if bidID == "" {
+					bidID = uuid.NewString()
+				}
 			}
 			bid := internal.Bid{
 				ID:               bidID,
