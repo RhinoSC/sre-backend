@@ -19,7 +19,7 @@ type RunMetadata struct {
 	Category       string
 	Platform       string
 	TwitchGameName string
-	TwitchGameId   int64
+	TwitchGameId   string
 	RunName        string
 	Note           string
 }

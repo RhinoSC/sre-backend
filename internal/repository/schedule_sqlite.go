@@ -99,7 +99,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	// Query for the runs
 	rows, err := r.db.Query(`
 	SELECT r.id AS run_id, r.name AS run_name, r.start_time_mili, r.estimate_string, r.estimate_mili, r.setup_time_mili, r.status,
-		rm.category, rm.platform, rm.twitch_game_name, rm.note, r.schedule_id,
+		rm.category, rm.platform, rm.twitch_game_name, rm.twitch_game_id, rm.note, r.schedule_id,
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
 		um.id AS user_socials_id, um.twitch AS user_twitch, um.twitter AS user_twitter, um.youtube AS user_youtube, um.facebook AS user_facebook,
@@ -140,7 +140,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
-		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.Note, &run.ScheduleId,
+		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.TwitchGameId, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
 			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {

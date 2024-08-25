@@ -63,15 +63,20 @@ INSERT INTO prizes (id, name, description, url, min_amount, status, internationa
 ('prize3', 'Prize 3', 'Description for Prize 3', 'http://example.com/prize3', 150, 'Available', true, 'event3'),
 ('prize4', 'Prize 4', 'Description for Prize 4', 'http://example.com/prize4', 200, 'Available', false, 'event4');
 
+-- Insertar datos en la tabla bids
+INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, status, run_id) VALUES
+('bid1', 'Bid War 1', 1000, 0, 'First Bid War', 'bidwar', true, 'active', 'run1'),
+('bid2', 'Total Donation 1', 2000, 0, 'Total Donation Goal', 'total', false, 'active', 'run2'),
+('bid3', 'Goal 1', 500, 0, 'Achieve this Goal', 'goal', false, 'default', 'run4'),
+('bid4', 'Bid War 2', 1500, 0, 'Second Bid War', 'bidwar', true, 'active', 'run5'),
+('bid5', 'Total Donation 2', 2500, 0, 'Another Total Donation Goal', 'total', false, 'default', 'run6');
+
 -- Insertar datos de prueba en la tabla bid_options
 INSERT INTO bid_options (id, bid_id, name, current_amount) VALUES
-('option1', 'bid1', 'Option 1', 20),
-('option2', 'bid1', 'Option 2', 20),
-('option3', 'bid2', 'Option 3', 70),
-('option4', 'bid1', 'Option 4', 20),
-('option6', 'bid5', 'Option 5', 50),
-('option7', 'bid6', 'Option 6', 100),
-('option8', 'bid7', 'Option 7', 150);
+('option1', 'bid1', 'Option A', 0),
+('option2', 'bid1', 'Option B', 0),
+('option3', 'bid4', 'Option X', 0),
+('option4', 'bid4', 'Option Y', 0);
 
 -- Insertar datos de prueba en la tabla donations
 INSERT INTO donations (id, name, email, time_mili, amount, description, to_bid, event_id) VALUES

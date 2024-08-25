@@ -66,7 +66,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 		t.id AS team_id, t.name AS team_name,
 		u.id AS user_id, u.name AS user_name, u.username AS user_username,
 		um.id AS user_socials_id, um.twitch AS user_twitch, um.twitter AS user_twitter, um.youtube AS user_youtube, um.facebook AS user_facebook,
-		b.id AS bid_id, b.bidname AS bid_name, b.goal AS bid_goal, b.current_amount AS bid_current_amount, b.description AS bid_description, b.type AS bid_type, b.create_new_options AS bid_create_new_options,
+		b.id AS bid_id, b.bidname AS bid_name, b.goal AS bid_goal, b.current_amount AS bid_current_amount, b.description AS bid_description, b.type AS bid_type, b.create_new_options AS bid_create_new_options, b.status AS bid_status,
 		bo.id AS bid_option_id, bo.name AS bid_option_name, bo.current_amount AS bid_option_current_amount
 	FROM 
 		runs AS r
@@ -90,11 +90,11 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 	bidMap := make(map[string]*internal.Bid)
 
 	for rows.Next() {
-		var runID, teamID, userID, bidID, bidOptionID, runStatus sql.NullString
+		var runID, teamID, userID, bidID, bidOptionID, runStatus, twitchGameId sql.NullString
 		var runName, teamName, userName, userUsername, socialsID, twitch, twitter, youtube, facebook sql.NullString
-		var startTimeMili, estimateMili, setupTimeMili, twitchGameId sql.NullInt64
+		var startTimeMili, estimateMili, setupTimeMili sql.NullInt64
 		var estimateString, category, platform, twitchGameName, note, scheduleID sql.NullString
-		var bidName, bidDescription, bidType, bidOptionName sql.NullString
+		var bidName, bidDescription, bidType, bidOptionName, bidStatus sql.NullString
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
@@ -103,7 +103,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 			&teamID, &teamName,
 			&userID, &userName, &userUsername,
 			&socialsID, &twitch, &twitter, &youtube, &facebook,
-			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions,
+			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidStatus,
 			&bidOptionID, &bidOptionName, &bidOptionCurrentAmount,
 		)
 		if err != nil {
@@ -127,7 +127,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 					Category:       category.String,
 					Platform:       platform.String,
 					TwitchGameName: twitchGameName.String,
-					TwitchGameId:   twitchGameId.Int64,
+					TwitchGameId:   twitchGameId.String,
 					Note:           note.String,
 				},
 				ScheduleId: scheduleID.String,
@@ -187,6 +187,7 @@ func (r *RunSqlite) FindAll() (runs []internal.Run, err error) {
 					Description:      bidDescription.String,
 					Type:             internal.BidType(bidType.String),
 					CreateNewOptions: createNewOptions.Bool,
+					Status:           bidStatus.String,
 					RunID:            runID.String,
 					BidOptions:       []internal.BidOptions{},
 				}
@@ -225,7 +226,7 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 						t.id AS team_id, t.name AS team_name,
 						u.id AS user_id, u.name AS user_name, u.username AS user_username,
 						um.id AS user_socials_id, um.twitch AS user_twitch, um.twitter AS user_twitter, um.youtube AS user_youtube, um.facebook AS user_facebook,
-						b.id AS bid_id, b.bidname AS bid_name, b.goal AS bid_goal, b.current_amount AS bid_current_amount, b.description AS bid_description, b.type AS bid_type, b.create_new_options AS bid_create_new_options,
+						b.id AS bid_id, b.bidname AS bid_name, b.goal AS bid_goal, b.current_amount AS bid_current_amount, b.description AS bid_description, b.type AS bid_type, b.create_new_options AS bid_create_new_options, b.status AS bid_status,
 						bo.id AS bid_option_id, bo.name AS bid_option_name, bo.current_amount AS bid_option_current_amount FROM  runs AS r
 						JOIN  run_metadata AS rm ON r.id = rm.run_id
 						LEFT JOIN teams AS t ON t.run_id = r.id
@@ -256,13 +257,13 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 
 		var teamID, userID, bidID, bidOptionID sql.NullString
 		var teamName, userName, userUsername, socialsID, twitch, twitter, youtube, facebook sql.NullString
-		var bidName, bidDescription, bidType, bidOptionName sql.NullString
+		var bidName, bidDescription, bidType, bidOptionName, bidStatus sql.NullString
 		var bidGoal, bidCurrentAmount, bidOptionCurrentAmount sql.NullFloat64
 		var createNewOptions sql.NullBool
 
 		err = rows.Scan(&run.ID, &run.Name, &run.StartTimeMili, &run.EstimateString, &run.EstimateMili, &run.SetupTimeMili, &run.Status, &run.RunMetadata.Category, &run.RunMetadata.Platform, &run.RunMetadata.TwitchGameName, &run.RunMetadata.TwitchGameId, &run.RunMetadata.Note, &run.ScheduleId,
 			&teamID, &teamName, &userID, &userName, &userUsername, &socialsID, &twitch, &twitter, &youtube, &facebook,
-			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
+			&bidID, &bidName, &bidGoal, &bidCurrentAmount, &bidDescription, &bidType, &createNewOptions, &bidStatus, &bidOptionID, &bidOptionName, &bidOptionCurrentAmount)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				err = internal.ErrRunRepositoryNotFound
@@ -316,6 +317,7 @@ func (r *RunSqlite) FindById(id string) (run internal.Run, err error) {
 					Description:      bidDescription.String,
 					Type:             internal.BidType(bidType.String),
 					CreateNewOptions: createNewOptions.Bool,
+					Status:           bidStatus.String,
 					RunID:            run.ID,
 					BidOptions:       []internal.BidOptions{},
 				}
@@ -426,8 +428,8 @@ func (r *RunSqlite) Save(run *internal.Run) (err error) {
 
 	// Insertar los bids
 	for _, bid := range run.Bids {
-		_, err = tx.Exec("INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-			bid.ID, bid.Bidname, bid.Goal, bid.CurrentAmount, bid.Description, bid.Type, bid.CreateNewOptions, run.ID)
+		_, err = tx.Exec("INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, status, run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+			bid.ID, bid.Bidname, bid.Goal, bid.CurrentAmount, bid.Description, bid.Type, bid.CreateNewOptions, bid.Status, run.ID)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
@@ -555,7 +557,7 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 
 	// Insertar o actualizar bids y bid_options
 	for _, bid := range run.Bids {
-		_, err = tx.Exec("INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET bidname = excluded.bidname, goal = excluded.goal, current_amount = excluded.current_amount, description = excluded.description, type = excluded.type, create_new_options = excluded.create_new_options, run_id = excluded.run_id;", bid.ID, bid.Bidname, bid.Goal, bid.CurrentAmount, bid.Description, bid.Type, bid.CreateNewOptions, run.ID)
+		_, err = tx.Exec("INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, status, run_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET bidname = excluded.bidname, goal = excluded.goal, current_amount = excluded.current_amount, description = excluded.description, type = excluded.type, create_new_options = excluded.create_new_options, run_id = excluded.run_id;", bid.ID, bid.Bidname, bid.Goal, bid.CurrentAmount, bid.Description, bid.Type, bid.CreateNewOptions, bid.Status, run.ID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {

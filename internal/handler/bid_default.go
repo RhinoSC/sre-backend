@@ -34,6 +34,7 @@ type BidAsJSON struct {
 	Description      string            `json:"description"`
 	Type             internal.BidType  `json:"type"`
 	CreateNewOptions bool              `json:"create_new_options"`
+	Status           string            `json:"status"`
 	RunID            string            `json:"run_id"`
 	BidOptions       []BidOptionAsJSON `json:"bid_options"`
 }
@@ -45,6 +46,7 @@ type BidAsBodyJSON struct {
 	Description      string            `json:"description" validate:"required"`
 	Type             internal.BidType  `json:"type" validate:"required"`
 	CreateNewOptions bool              `json:"create_new_options"`
+	Status           string            `json:"status" validate:"required"`
 	RunID            string            `json:"run_id" validate:"required"`
 	BidOptions       []BidOptionAsJSON `json:"bid_options"`
 }
@@ -95,6 +97,7 @@ func (h *BidDefault) GetAll() http.HandlerFunc {
 				Description:      bid.Description,
 				Type:             bid.Type,
 				CreateNewOptions: bid.CreateNewOptions,
+				Status:           bid.Status,
 				RunID:            bid.RunID,
 				BidOptions:       bidOptions,
 			}
@@ -149,6 +152,7 @@ func (h *BidDefault) GetByID() http.HandlerFunc {
 			Description:      bid.Description,
 			Type:             bid.Type,
 			CreateNewOptions: bid.CreateNewOptions,
+			Status:           bid.Status,
 			RunID:            bid.RunID,
 			BidOptions:       bidOptions,
 		}
@@ -213,6 +217,7 @@ func (h *BidDefault) Create() http.HandlerFunc {
 			Description:      body.Description,
 			Type:             body.Type,
 			CreateNewOptions: body.CreateNewOptions,
+			Status:           body.Status,
 			RunID:            body.RunID,
 			BidOptions:       bidOptions,
 		}
@@ -250,6 +255,7 @@ func (h *BidDefault) Create() http.HandlerFunc {
 			Description:      bid.Description,
 			Type:             bid.Type,
 			CreateNewOptions: bid.CreateNewOptions,
+			Status:           bid.Status,
 			RunID:            bid.RunID,
 			BidOptions:       bidOptionsResponse,
 		}
@@ -302,6 +308,7 @@ func (h *BidDefault) Update() http.HandlerFunc {
 			Description:      bid.Description,
 			Type:             bid.Type,
 			CreateNewOptions: bid.CreateNewOptions,
+			Status:           bid.Status,
 			RunID:            bid.RunID,
 			BidOptions:       bidOptionsDB,
 		}
@@ -351,6 +358,7 @@ func (h *BidDefault) Update() http.HandlerFunc {
 			Description:      bidDB.Description,
 			Type:             bidDB.Type,
 			CreateNewOptions: bidDB.CreateNewOptions,
+			Status:           bidDB.Status,
 			RunID:            bidDB.RunID,
 			BidOptions:       bidOptions,
 		}
@@ -388,6 +396,7 @@ func (h *BidDefault) Update() http.HandlerFunc {
 			Description:      bid.Description,
 			Type:             bid.Type,
 			CreateNewOptions: bid.CreateNewOptions,
+			Status:           bid.Status,
 			RunID:            bid.RunID,
 			BidOptions:       bidOptionsResponse,
 		}

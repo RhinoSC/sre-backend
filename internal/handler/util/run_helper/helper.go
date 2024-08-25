@@ -38,6 +38,7 @@ type RunBidsAsJSON struct {
 	Description      string                `json:"description"`
 	Type             internal.BidType      `json:"type"`
 	CreateNewOptions bool                  `json:"create_new_options"`
+	Status           string                `json:"status"`
 	RunID            string                `json:"run_id"`
 	BidOptions       []RunBidOptionsAsJSON `json:"options"`
 }
@@ -46,7 +47,7 @@ type RunMetadataAsJSON struct {
 	Category       string `json:"category"`
 	Platform       string `json:"platform"`
 	TwitchGameName string `json:"twitch_game_name"`
-	TwitchGameId   int64  `json:"twitch_game_id"`
+	TwitchGameId   string `json:"twitch_game_id"`
 	RunName        string `json:"run_name"`
 	Note           string `json:"note"`
 }
@@ -69,7 +70,7 @@ type RunMetadataAsBodyJSON struct {
 	Category       string `json:"category" validate:"required"`
 	Platform       string `json:"platform" validate:"required"`
 	TwitchGameName string `json:"twitch_game_name" validate:"required"`
-	TwitchGameId   int64  `json:"twitch_game_id" validate:"required"`
+	TwitchGameId   string `json:"twitch_game_id" validate:"required"`
 	RunName        string `json:"run_name"`
 	Note           string `json:"note"`
 }
@@ -95,6 +96,7 @@ type RunBidsAsBodyJSON struct {
 	Description      string                    `json:"description" validate:"required"`
 	Type             internal.BidType          `json:"type" validate:"required"`
 	CreateNewOptions bool                      `json:"create_new_options" validate:"required"`
+	Status           string                    `json:"status" validate:"required"`
 	BidOptions       []RunBidOptionsAsBodyJSON `json:"bid_options" validate:"required"`
 }
 
@@ -175,6 +177,7 @@ func ConvertRunToJSON(run internal.Run) (runJSON RunAsJSON) {
 			Description:      bid.Description,
 			Type:             bid.Type,
 			CreateNewOptions: bid.CreateNewOptions,
+			Status:           bid.Status,
 			RunID:            bid.RunID,
 			BidOptions:       make([]RunBidOptionsAsJSON, len(bid.BidOptions)),
 		}

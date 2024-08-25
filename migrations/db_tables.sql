@@ -127,6 +127,7 @@ CREATE TABLE bids (
     description TEXT,
     type VARCHAR(255) NOT NULL CHECK (type IN ('bidwar', 'total', 'goal')),
     create_new_options BOOLEAN NOT NULL,
+    `status` VARCHAR(20),
     run_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
 );

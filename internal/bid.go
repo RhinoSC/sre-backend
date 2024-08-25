@@ -35,6 +35,7 @@ type Bid struct {
 	Description      string
 	Type             BidType
 	CreateNewOptions bool
+	Status           string
 	RunID            string
 	BidOptions       []BidOptions
 }
