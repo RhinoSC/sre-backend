@@ -119,11 +119,44 @@ type RunAsOrderBodyJSON struct {
 	Status        string `json:"status"  validate:"required"`
 }
 
-func ConvertRunToJSON(run internal.Run, withDetails bool) (runJSON RunAsJSON) {
-	if !withDetails {
+func ConvertRunToJSON(run internal.Run, details string) (runJSON RunAsJSON) {
+	if details == "simple" {
 		runJSON = RunAsJSON{
 			ID:   run.ID,
 			Name: run.Name,
+		}
+		return
+	} else if details == "bids" {
+		runJSON = RunAsJSON{
+			ID:   run.ID,
+			Name: run.Name,
+			Bids: make([]RunBidsAsJSON, len(run.Bids)),
+		}
+		for i, bid := range run.Bids {
+			bidJSON := RunBidsAsJSON{
+				ID:               bid.ID,
+				Bidname:          bid.Bidname,
+				Goal:             bid.Goal,
+				CurrentAmount:    bid.CurrentAmount,
+				Description:      bid.Description,
+				Type:             bid.Type,
+				CreateNewOptions: bid.CreateNewOptions,
+				Status:           bid.Status,
+				RunID:            bid.RunID,
+				BidOptions:       make([]RunBidOptionsAsJSON, len(bid.BidOptions)),
+			}
+
+			for j, option := range bid.BidOptions {
+				optionJSON := RunBidOptionsAsJSON{
+					ID:            option.ID,
+					Name:          option.Name,
+					CurrentAmount: option.CurrentAmount,
+					BidID:         option.BidID,
+				}
+				bidJSON.BidOptions[j] = optionJSON
+			}
+
+			runJSON.Bids[i] = bidJSON
 		}
 		return
 	}
@@ -205,9 +238,9 @@ func ConvertRunToJSON(run internal.Run, withDetails bool) (runJSON RunAsJSON) {
 	return
 }
 
-func ConvertRunsArrayToJSON(runs []internal.Run, withDetails bool) (runsJSON []RunAsJSON) {
+func ConvertRunsArrayToJSON(runs []internal.Run, details string) (runsJSON []RunAsJSON) {
 	for _, run := range runs {
-		runsJSON = append(runsJSON, ConvertRunToJSON(run, withDetails))
+		runsJSON = append(runsJSON, ConvertRunToJSON(run, details))
 	}
 
 	return

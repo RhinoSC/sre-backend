@@ -58,10 +58,10 @@ INSERT INTO admins (id, username, password, created_at) VALUES
 
 -- Insertar datos de prueba en la tabla prizes
 INSERT INTO prizes (id, name, description, url, min_amount, status, international_delivery, event_id) VALUES
-('prize1', 'Prize 1', 'Description for Prize 1', 'http://example.com/prize1', 50, 'Available', true, 'event1'),
-('prize2', 'Prize 2', 'Description for Prize 2', 'http://example.com/prize2', 100, 'Available', false, 'event2'),
-('prize3', 'Prize 3', 'Description for Prize 3', 'http://example.com/prize3', 150, 'Available', true, 'event3'),
-('prize4', 'Prize 4', 'Description for Prize 4', 'http://example.com/prize4', 200, 'Available', false, 'event4');
+('prize1', 'Prize 1', 'Description for Prize 1', 'http://example.com/prize1', 50, 'available', true, 'event1'),
+('prize2', 'Prize 2', 'Description for Prize 2', 'http://example.com/prize2', 100, 'available', false, 'event2'),
+('prize3', 'Prize 3', 'Description for Prize 3', 'http://example.com/prize3', 150, 'available', true, 'event3'),
+('prize4', 'Prize 4', 'Description for Prize 4', 'http://example.com/prize4', 200, 'available', false, 'event4');
 
 -- Insertar datos en la tabla bids
 INSERT INTO bids (id, bidname, goal, current_amount, description, type, create_new_options, status, run_id) VALUES

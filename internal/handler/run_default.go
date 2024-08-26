@@ -30,11 +30,6 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 
 		details := r.URL.Query().Get("details")
 
-		withDetails := true
-		if details == "simple" {
-			withDetails = false
-		}
-
 		// process
 		runs, err := h.sv.FindAll()
 		if err != nil {
@@ -43,7 +38,7 @@ func (h *RunDefault) GetAll() http.HandlerFunc {
 		}
 
 		// response
-		data := run_helper.ConvertRunsArrayToJSON(runs, withDetails)
+		data := run_helper.ConvertRunsArrayToJSON(runs, details)
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -74,7 +69,7 @@ func (h *RunDefault) GetByID() http.HandlerFunc {
 		}
 
 		// response
-		data := run_helper.ConvertRunToJSON(run, true)
+		data := run_helper.ConvertRunToJSON(run, "")
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -189,7 +184,7 @@ func (h *RunDefault) Create() http.HandlerFunc {
 
 		// response
 
-		data := run_helper.ConvertRunToJSON(run, true)
+		data := run_helper.ConvertRunToJSON(run, "")
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
@@ -298,6 +293,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 				Description:      bidBody.Description,
 				Type:             bidBody.Type,
 				CreateNewOptions: bidBody.CreateNewOptions,
+				Status:           bidBody.Status,
 				RunID:            run.ID,
 				BidOptions:       make([]internal.BidOptions, len(bidBody.BidOptions)),
 			}
@@ -338,7 +334,7 @@ func (h *RunDefault) Update() http.HandlerFunc {
 
 		// Response
 
-		data := run_helper.ConvertRunToJSON(run, true)
+		data := run_helper.ConvertRunToJSON(run, "")
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",
