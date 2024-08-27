@@ -53,13 +53,15 @@ func (r *DonationSqlite) FindAllWithBidDetails() (donations []internal.DonationW
 	}
 
 	for rows.Next() {
+		var donationBidDetails internal.DonationBidDetailsDB
 		var donationWithBidDetailsDB internal.DonationWithBidDetailsDB
-		err = rows.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationWithBidDetailsDB.BidID, &donationWithBidDetailsDB.Bidname, &donationWithBidDetailsDB.Goal, &donationWithBidDetailsDB.CurrentAmount, &donationWithBidDetailsDB.BidDescription, &donationWithBidDetailsDB.Type, &donationWithBidDetailsDB.CreateNewOptions, &donationWithBidDetailsDB.RunID, &donationWithBidDetailsDB.OptionID, &donationWithBidDetailsDB.OptionName, &donationWithBidDetailsDB.OptionAmount)
+		err = rows.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationBidDetails.BidID, &donationBidDetails.Bidname, &donationBidDetails.Goal, &donationBidDetails.CurrentAmount, &donationBidDetails.BidDescription, &donationBidDetails.Type, &donationBidDetails.CreateNewOptions, &donationBidDetails.RunID, &donationBidDetails.OptionID, &donationBidDetails.OptionName, &donationBidDetails.OptionAmount)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
 		}
 
+		donationWithBidDetailsDB.BidDetails = &donationBidDetails
 		donation := donation_helper.ConvertDonationWithBidDetailsDBtoInternal(donationWithBidDetailsDB)
 
 		donations = append(donations, donation)
@@ -92,8 +94,9 @@ func (r *DonationSqlite) FindByIdWithBidDetails(id string) (donation internal.Do
 
 	row := r.db.QueryRow("SELECT d.`id` AS `donation_id`, d.`name` AS `donation_name`, d.`email`, d.`time_mili`, d.`amount`, d.`description` AS `donation_description`, d.`to_bid`, d.`event_id`, b.`id` AS `bid_id`, b.`bidname`, b.`goal`, b.`current_amount`, b.`description` as `bid_description`, b.`type`, b.`create_new_options`, b.`run_id`, bo.`id` AS `option_id`, bo.`name` AS `option_name`, bo.`current_amount` AS `option_amount` FROM `donations` AS `d` LEFT JOIN `donation_bids` AS db ON d.id = db.`donation_id` LEFT JOIN `bids` AS b ON db.`bid_id` = b.`id` LEFT JOIN `bid_options` AS bo ON db.`bid_option_id` = bo.`id` WHERE d.`id` == ?;", id)
 
+	var donationBidDetails internal.DonationBidDetailsDB
 	var donationWithBidDetailsDB internal.DonationWithBidDetailsDB
-	err = row.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationWithBidDetailsDB.BidID, &donationWithBidDetailsDB.Bidname, &donationWithBidDetailsDB.Goal, &donationWithBidDetailsDB.CurrentAmount, &donationWithBidDetailsDB.BidDescription, &donationWithBidDetailsDB.Type, &donationWithBidDetailsDB.CreateNewOptions, &donationWithBidDetailsDB.RunID, &donationWithBidDetailsDB.OptionID, &donationWithBidDetailsDB.OptionName, &donationWithBidDetailsDB.OptionAmount)
+	err = row.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationBidDetails.BidID, &donationBidDetails.Bidname, &donationBidDetails.Goal, &donationBidDetails.CurrentAmount, &donationBidDetails.BidDescription, &donationBidDetails.Type, &donationBidDetails.CreateNewOptions, &donationBidDetails.RunID, &donationBidDetails.OptionID, &donationBidDetails.OptionName, &donationBidDetails.OptionAmount)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = internal.ErrDonationRepositoryNotFound
@@ -102,6 +105,7 @@ func (r *DonationSqlite) FindByIdWithBidDetails(id string) (donation internal.Do
 		return
 	}
 
+	donationWithBidDetailsDB.BidDetails = &donationBidDetails
 	donation = donation_helper.ConvertDonationWithBidDetailsDBtoInternal(donationWithBidDetailsDB)
 	return
 }
@@ -141,13 +145,15 @@ func (r *DonationSqlite) FindByEventIDWithBidDetails(id string) (donations []int
 	}
 
 	for rows.Next() {
+		var donationBidDetails internal.DonationBidDetailsDB
 		var donationWithBidDetailsDB internal.DonationWithBidDetailsDB
-		err = rows.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationWithBidDetailsDB.BidID, &donationWithBidDetailsDB.Bidname, &donationWithBidDetailsDB.Goal, &donationWithBidDetailsDB.CurrentAmount, &donationWithBidDetailsDB.BidDescription, &donationWithBidDetailsDB.Type, &donationWithBidDetailsDB.CreateNewOptions, &donationWithBidDetailsDB.RunID, &donationWithBidDetailsDB.OptionID, &donationWithBidDetailsDB.OptionName, &donationWithBidDetailsDB.OptionAmount)
+		err = rows.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationBidDetails.BidID, &donationBidDetails.Bidname, &donationBidDetails.Goal, &donationBidDetails.CurrentAmount, &donationBidDetails.BidDescription, &donationBidDetails.Type, &donationBidDetails.CreateNewOptions, &donationBidDetails.RunID, &donationBidDetails.OptionID, &donationBidDetails.OptionName, &donationBidDetails.OptionAmount)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
 		}
 
+		donationWithBidDetailsDB.BidDetails = &donationBidDetails
 		donation := donation_helper.ConvertDonationWithBidDetailsDBtoInternal(donationWithBidDetailsDB)
 
 		donations = append(donations, donation)
@@ -185,9 +191,9 @@ func (r *DonationSqlite) Save(donation *internal.DonationWithBidDetails) (err er
 	}
 
 	if donation.ToBid {
-		if donation.OptionID != "" {
+		if donation.BidDetails.OptionID != "" {
 			query := "INSERT INTO `bid_options` (`id`, `bid_id`, `name`, `current_amount`) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET `current_amount` = `current_amount` + excluded.current_amount;"
-			_, err = tx.Exec(query, donation.OptionID, donation.BidID, donation.OptionName, donation.Amount)
+			_, err = tx.Exec(query, donation.BidDetails.OptionID, donation.BidDetails.BidID, donation.BidDetails.OptionName, donation.Amount)
 			if err != nil {
 				var sqliteErr sqlite3.Error
 				if errors.As(err, &sqliteErr) {
@@ -205,12 +211,12 @@ func (r *DonationSqlite) Save(donation *internal.DonationWithBidDetails) (err er
 
 		query := "INSERT INTO donation_bids (donation_id, bid_id, bid_option_id) VALUES (?, ?, ?);"
 		var optionID any
-		if donation.OptionID != "" {
-			optionID = donation.OptionID
+		if donation.BidDetails.OptionID != "" {
+			optionID = donation.BidDetails.OptionID
 		} else {
 			optionID = nil
 		}
-		_, err = tx.Exec(query, donation.ID, donation.BidID, optionID)
+		_, err = tx.Exec(query, donation.ID, donation.BidDetails.BidID, optionID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {
@@ -225,8 +231,8 @@ func (r *DonationSqlite) Save(donation *internal.DonationWithBidDetails) (err er
 			}
 		}
 
-		query = "UPDATE bids SET current_amount = MAX((SELECT COALESCE(SUM(bid_options.current_amount), 0) FROM bid_options WHERE bid_options.bid_id = bids.`id`), ?) WHERE id = ?;"
-		_, err = tx.Exec(query, donation.CurrentAmount, donation.BidID)
+		query = "UPDATE bids SET current_amount = current_amount + ? WHERE id = ?;"
+		_, err = tx.Exec(query, donation.Amount, donation.BidDetails.BidID)
 		if err != nil {
 			var sqliteErr sqlite3.Error
 			if errors.As(err, &sqliteErr) {
@@ -267,9 +273,6 @@ func (r *DonationSqlite) Update(donation *internal.DonationWithBidDetails) (err 
 		return
 	}
 
-	// Calcular la diferencia entre el monto original y el nuevo monto
-	amountDifference := donation.Amount - originalAmount
-
 	// Actualizar la tabla donations
 	_, err = tx.Exec("UPDATE `donations` SET `name` = ?, `email` = ?, `time_mili` = ?, `amount` = ?, `description` = ?, `to_bid` = ?, `event_id` = ? WHERE `id` = ?;",
 		donation.Name, donation.Email, donation.TimeMili, donation.Amount, donation.Description, donation.ToBid, donation.EventID, donation.ID)
@@ -278,21 +281,76 @@ func (r *DonationSqlite) Update(donation *internal.DonationWithBidDetails) (err 
 		return
 	}
 
-	if donation.ToBid {
-		if donation.OptionID != "" {
-			// Actualizar la tabla bid_options
-			query := "INSERT INTO `bid_options` (`id`, `bid_id`, `name`, `current_amount`) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET `current_amount` = MAX(`current_amount` + ?, 0);"
-			_, err = tx.Exec(query, donation.OptionID, donation.BidID, donation.OptionName, donation.Amount, amountDifference)
+	// Si el BidDetails y NewBidDetails son los mismos
+	if donation.BidDetails.BidID == donation.NewBidDetails.BidID && donation.BidDetails.OptionID == donation.NewBidDetails.OptionID {
+		// Actualizar el monto en el mismo bid o bidOption
+		if donation.NewBidDetails.Type == "bidwar" && donation.NewBidDetails.OptionID != "" {
+			// Si es una bidwar, actualizar el bidOption
+			_, err = tx.Exec("UPDATE bid_options SET current_amount = current_amount + ? WHERE id = ? AND bid_id = ?", donation.Amount-originalAmount, donation.NewBidDetails.OptionID, donation.NewBidDetails.BidID)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
+		} else {
+			// Si no es una bidwar, actualizar el bid directamente
+			_, err = tx.Exec("UPDATE bids SET current_amount = current_amount + ? WHERE id = ?", donation.Amount-originalAmount, donation.NewBidDetails.BidID)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
+		}
+	} else {
+		// Verificar si el oldBid (BidDetails) es bidwar y manejar bidOptions
+		if donation.BidDetails.Type == "bidwar" && donation.BidDetails.OptionID != "" {
+			// Restar el monto de la opción en bid_options
+			_, err = tx.Exec("UPDATE bid_options SET current_amount = current_amount - ? WHERE id = ? AND bid_id = ?", originalAmount, donation.BidDetails.OptionID, donation.BidDetails.BidID)
 			if err != nil {
 				logger.Log.Error(err.Error())
 				return
 			}
 		}
 
-		// Actualizar la tabla bids
+		// Restar el monto del oldBid (BidDetails)
+		_, err = tx.Exec("UPDATE bids SET current_amount = current_amount - ? WHERE id = ?", originalAmount, donation.BidDetails.BidID)
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
 
-		query := "UPDATE bids SET current_amount = MAX((SELECT COALESCE(SUM(bid_options.current_amount), 0) FROM bid_options WHERE bid_options.bid_id = bids.`id`), MAX(`current_amount` + ?, 0)) WHERE id = ?;"
-		_, err = tx.Exec(query, amountDifference, donation.BidID)
+		// Delete en la tabla intermedia donations_bids
+		_, err = tx.Exec("DELETE FROM donation_bids WHERE donation_id = ? AND bid_id = ?;", donation.ID, donation.BidDetails.BidID)
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
+
+		// Verificar si el newBid (NewBidDetails) es bidwar y manejar bidOptions
+		if donation.NewBidDetails.Type == "bidwar" && donation.NewBidDetails.OptionID != "" {
+			// Sumar el monto a la nueva opción en bid_options
+			_, err = tx.Exec("INSERT INTO `bid_options` (`id`, `bid_id`, `name`, `current_amount`) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET `current_amount` = MAX(`current_amount` + ?, 0);",
+				donation.NewBidDetails.OptionID, donation.NewBidDetails.BidID, donation.NewBidDetails.OptionName, donation.Amount, donation.Amount)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
+
+			// Insert en la tabla intermedia donations_bids cuando es bidwar
+			_, err = tx.Exec("INSERT INTO donation_bids (donation_id, bid_id, bid_option_id) VALUES (?, ?, ?);", donation.ID, donation.NewBidDetails.BidID, donation.NewBidDetails.OptionID)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
+		} else {
+			// Insert en la tabla intermedia donations_bids cuando no es bidwar
+			_, err = tx.Exec("INSERT INTO donation_bids (donation_id, bid_id) VALUES (?, ?);", donation.ID, donation.NewBidDetails.BidID, donation.NewBidDetails.OptionID)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
+		}
+
+		// Sumar el monto al newBid (NewBidDetails)
+		_, err = tx.Exec("UPDATE bids SET current_amount = current_amount + ? WHERE id = ?", donation.Amount, donation.NewBidDetails.BidID)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
@@ -320,8 +378,9 @@ func (r *DonationSqlite) Delete(id string) (err error) {
 	var donation internal.DonationWithBidDetails
 	row := tx.QueryRow("SELECT d.`id` AS `donation_id`, d.`name` AS `donation_name`, d.`email`, d.`time_mili`, d.`amount`, d.`description` AS `donation_description`, d.`to_bid`, d.`event_id`, b.`id` AS `bid_id`, b.`bidname`, b.`goal`, b.`current_amount`, b.`description` as `bid_description`, b.`type`, b.`create_new_options`, b.`run_id`, bo.`id` AS `option_id`, bo.`name` AS `option_name`, bo.`current_amount` AS `option_amount` FROM `donations` AS `d` LEFT JOIN `donation_bids` AS db ON d.id = db.`donation_id` LEFT JOIN `bids` AS b ON db.`bid_id` = b.`id` LEFT JOIN `bid_options` AS bo ON db.`bid_option_id` = bo.`id` WHERE d.`id` == ?;", id)
 
+	var donationBidDetails internal.DonationBidDetailsDB
 	var donationWithBidDetailsDB internal.DonationWithBidDetailsDB
-	err = row.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationWithBidDetailsDB.BidID, &donationWithBidDetailsDB.Bidname, &donationWithBidDetailsDB.Goal, &donationWithBidDetailsDB.CurrentAmount, &donationWithBidDetailsDB.BidDescription, &donationWithBidDetailsDB.Type, &donationWithBidDetailsDB.CreateNewOptions, &donationWithBidDetailsDB.RunID, &donationWithBidDetailsDB.OptionID, &donationWithBidDetailsDB.OptionName, &donationWithBidDetailsDB.OptionAmount)
+	err = row.Scan(&donationWithBidDetailsDB.ID, &donationWithBidDetailsDB.Name, &donationWithBidDetailsDB.Email, &donationWithBidDetailsDB.TimeMili, &donationWithBidDetailsDB.Amount, &donationWithBidDetailsDB.Description, &donationWithBidDetailsDB.ToBid, &donationWithBidDetailsDB.EventID, &donationBidDetails.BidID, &donationBidDetails.Bidname, &donationBidDetails.Goal, &donationBidDetails.CurrentAmount, &donationBidDetails.BidDescription, &donationBidDetails.Type, &donationBidDetails.CreateNewOptions, &donationBidDetails.RunID, &donationBidDetails.OptionID, &donationBidDetails.OptionName, &donationBidDetails.OptionAmount)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = internal.ErrDonationRepositoryNotFound
@@ -331,12 +390,13 @@ func (r *DonationSqlite) Delete(id string) (err error) {
 		return
 	}
 
+	donationWithBidDetailsDB.BidDetails = &donationBidDetails
 	donation = donation_helper.ConvertDonationWithBidDetailsDBtoInternal(donationWithBidDetailsDB)
 
 	if donation.ToBid {
-		if donation.OptionID != "" {
+		if donation.BidDetails.OptionID != "" {
 			// Restar el monto de la opción de bid correspondiente
-			_, err = tx.Exec("UPDATE `bid_options` SET `current_amount` =  MAX(`current_amount` - ?, 0) WHERE `id` = ?", donation.Amount, donation.OptionID)
+			_, err = tx.Exec("UPDATE `bid_options` SET `current_amount` =  MAX(`current_amount` - ?, 0) WHERE `id` = ?", donation.Amount, donation.BidDetails.OptionID)
 			if err != nil {
 				logger.Log.Error(err.Error())
 				return
@@ -344,7 +404,7 @@ func (r *DonationSqlite) Delete(id string) (err error) {
 		}
 
 		// Restar el monto del bid correspondiente
-		_, err = tx.Exec("UPDATE `bids` SET `current_amount` = MAX(`current_amount` - ?, 0) WHERE `id` = ?", donation.Amount, donation.BidID)
+		_, err = tx.Exec("UPDATE `bids` SET `current_amount` = MAX(`current_amount` - ?, 0) WHERE `id` = ?", donation.Amount, donation.BidDetails.BidID)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return

@@ -190,9 +190,11 @@ func (h *DonationDefault) Create() http.HandlerFunc {
 				ToBid:       *body.ToBid,
 				EventID:     body.EventID,
 			},
-			BidID:      body.BidDetails.BidID,
-			OptionID:   body.BidDetails.OptionID,
-			OptionName: body.BidDetails.OptionName,
+			BidDetails: &internal.DonationBidDetails{
+				BidID:      body.BidDetails.BidID,
+				OptionID:   body.BidDetails.OptionID,
+				OptionName: body.BidDetails.OptionName,
+			},
 		}
 
 		err = h.sv.Save(&donation)
@@ -259,19 +261,39 @@ func (h *DonationDefault) Update() http.HandlerFunc {
 			return
 		}
 
-		// Update donation with the new values from body
-		donation.Name = body.Name
-		donation.Email = body.Email
-		donation.TimeMili = body.TimeMili
-		donation.Amount = body.Amount
-		donation.Description = body.Description
-		donation.ToBid = *body.ToBid
-		donation.EventID = body.EventID
-		donation.BidID = body.BidDetails.BidID
-		donation.OptionID = body.BidDetails.OptionID
-		donation.OptionName = body.BidDetails.OptionName
+		// Crear nuevo bidOption
+		if body.NewBidDetails.CreateNewOptions && body.NewBidDetails.OptionID == "" && body.NewBidDetails.OptionName != "" {
+			body.NewBidDetails.OptionID = uuid.NewString()
+		}
 
-		err = h.sv.Update(&donation)
+		// Create a new DonationWithBidDetails struct with the updated values
+		updatedDonation := &internal.DonationWithBidDetails{
+			Donation: internal.Donation{
+				ID:          id,
+				Name:        body.Name,
+				Email:       body.Email,
+				TimeMili:    body.TimeMili,
+				Amount:      body.Amount,
+				Description: body.Description,
+				ToBid:       *body.ToBid,
+				EventID:     body.EventID,
+			},
+			BidDetails: &internal.DonationBidDetails{
+				BidID:        donation.BidDetails.BidID,
+				OptionID:     donation.BidDetails.OptionID,
+				OptionAmount: donation.BidDetails.OptionAmount,
+				Type:         donation.BidDetails.Type,
+			},
+			NewBidDetails: &internal.DonationBidDetails{
+				BidID:      body.NewBidDetails.BidID,
+				OptionID:   body.NewBidDetails.OptionID,
+				OptionName: body.NewBidDetails.OptionName,
+				Type:       internal.BidType(body.NewBidDetails.Type),
+			},
+		}
+
+		// Update the donation with bid change
+		err = h.sv.Update(updatedDonation)
 		if err != nil {
 			switch {
 			case errors.Is(err, internal.ErrDonationServiceDuplicated):
@@ -284,29 +306,43 @@ func (h *DonationDefault) Update() http.HandlerFunc {
 
 		// response
 
-		data := donation_helper.DonationAsJSON{
-			ID:          donation.ID,
-			Name:        donation.Name,
-			Email:       donation.Email,
-			TimeMili:    donation.TimeMili,
-			Amount:      donation.Amount,
-			Description: donation.Description,
-			ToBid:       &donation.ToBid,
-			EventID:     donation.EventID,
-			BidDetails: donation_helper.BidDetails{
-				BidID:            donation.BidID,
-				Bidname:          donation.Bidname,
-				Goal:             donation.Goal,
-				CurrentAmount:    donation.CurrentAmount,
-				BidDescription:   donation.BidDescription,
-				Type:             donation.Type,
-				CreateNewOptions: donation.CreateNewOptions,
-				RunID:            donation.RunID,
-				OptionID:         donation.OptionID,
-				OptionName:       donation.OptionName,
-				OptionAmount:     donation.OptionAmount,
-			},
-		}
+		data := donation_helper.ConvertDonationWithBidDetailsToJSON(*updatedDonation)
+		// data := donation_helper.DonationAsJSON{
+		// 	ID:          donation.ID,
+		// 	Name:        updatedDonation.Name,
+		// 	Email:       updatedDonation.Email,
+		// 	TimeMili:    updatedDonation.TimeMili,
+		// 	Amount:      updatedDonation.Amount,
+		// 	Description: updatedDonation.Description,
+		// 	ToBid:       &updatedDonation.ToBid,
+		// 	EventID:     updatedDonation.EventID,
+		// 	BidDetails: &donation_helper.BidDetails{
+		// 		BidID:            updatedDonation.BidDetails.BidID,
+		// 		Bidname:          updatedDonation.BidDetails.Bidname,
+		// 		Goal:             updatedDonation.BidDetails.Goal,
+		// 		CurrentAmount:    updatedDonation.BidDetails.CurrentAmount,
+		// 		BidDescription:   updatedDonation.BidDetails.BidDescription,
+		// 		Type:             updatedDonation.BidDetails.Type,
+		// 		CreateNewOptions: updatedDonation.BidDetails.CreateNewOptions,
+		// 		RunID:            updatedDonation.BidDetails.RunID,
+		// 		OptionID:         updatedDonation.BidDetails.OptionID,
+		// 		OptionName:       updatedDonation.BidDetails.OptionName,
+		// 		OptionAmount:     updatedDonation.BidDetails.OptionAmount,
+		// 	},
+		// 	NewBidDetails: &donation_helper.BidDetails{
+		// 		BidID:            updatedDonation.NewBidDetails.BidID,
+		// 		Bidname:          updatedDonation.NewBidDetails.Bidname,
+		// 		Goal:             updatedDonation.NewBidDetails.Goal,
+		// 		CurrentAmount:    updatedDonation.NewBidDetails.CurrentAmount,
+		// 		BidDescription:   updatedDonation.NewBidDetails.BidDescription,
+		// 		Type:             updatedDonation.NewBidDetails.Type,
+		// 		CreateNewOptions: updatedDonation.NewBidDetails.CreateNewOptions,
+		// 		RunID:            updatedDonation.NewBidDetails.RunID,
+		// 		OptionID:         updatedDonation.NewBidDetails.OptionID,
+		// 		OptionName:       updatedDonation.NewBidDetails.OptionName,
+		// 		OptionAmount:     updatedDonation.NewBidDetails.OptionAmount,
+		// 	},
+		// }
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
 			"message": "success",

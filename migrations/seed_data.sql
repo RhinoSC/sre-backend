@@ -95,7 +95,7 @@ INSERT INTO donation_bids (donation_id, bid_id, bid_option_id) VALUES
 ('donation1', 'bid1', 'option1'),
 ('donation2', 'bid2', 'option3'),
 ('donation3', 'bid1', 'option2'),
-('donation4', 'bid1', 'option4'),
+('donation4', 'bid1', 'option2'),
 ('donation5', 'bid3', NULL),
 ('donation7', 'bid5', 'option6'),
 ('donation8', 'bid6', 'option7'),

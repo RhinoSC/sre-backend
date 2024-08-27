@@ -18,6 +18,11 @@ type Donation struct {
 
 type DonationWithBidDetails struct {
 	Donation
+	BidDetails    *DonationBidDetails
+	NewBidDetails *DonationBidDetails
+}
+
+type DonationBidDetails struct {
 	BidID            string
 	Bidname          string
 	Goal             float64
@@ -31,7 +36,7 @@ type DonationWithBidDetails struct {
 	OptionAmount     float64
 }
 
-type DonationWithBidDetailsDB struct {
+type DonationBidDetailsDB struct {
 	Donation
 	BidID            sql.NullString
 	Bidname          sql.NullString
@@ -44,6 +49,12 @@ type DonationWithBidDetailsDB struct {
 	OptionID         sql.NullString
 	OptionName       sql.NullString
 	OptionAmount     sql.NullFloat64
+}
+
+type DonationWithBidDetailsDB struct {
+	Donation
+	BidDetails    *DonationBidDetailsDB
+	NewBidDetails *DonationBidDetailsDB
 }
 
 var (
