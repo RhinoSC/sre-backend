@@ -54,9 +54,8 @@ func NewServerChi(cfg ConfigServerChi) *ServerChi {
 
 func (s *ServerChi) Run() (err error) {
 
-	// workingDir, err := os.Getwd()
-	// rootDir := filepath.Join(workingDir, "../../")
-	rootDir := "D:/code/SRE/sre-backend"
+	workingDir, err := os.Getwd()
+	rootDir := filepath.Join(workingDir)
 	filePath := filepath.Join(rootDir, "database.db?_foreign_keys=on")
 
 	db, err := sql.Open("sqlite3", filePath)
@@ -76,8 +75,7 @@ func (s *ServerChi) Run() (err error) {
 	twitch := internal.Twitch{
 		ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 		ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
-		// ClientToken:  os.Getenv("TWITCH_TOKEN"),
-		ClientToken: "6ea8twk5fe9gfgat219r14h73eyips",
+		ClientToken:  "",
 	}
 
 	// initilize twitch
