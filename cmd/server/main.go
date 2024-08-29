@@ -7,13 +7,14 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello World!")
-
+	port := 8080
+	portS := fmt.Sprintf(":%d", port)
 	cfg := application.ConfigServerChi{
-		Address: "localhost:8080",
+		Address: portS,
 	}
 	server := application.NewServerChi(cfg)
 
+	fmt.Printf("listening to: %d\n", port)
 	if err := server.Run(); err != nil {
 		fmt.Println(err)
 		return
