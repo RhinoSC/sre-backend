@@ -288,7 +288,15 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 }
 
 func (r *ScheduleSqlite) Save(schedule *internal.Schedule) (err error) {
-	_, err = r.db.Exec("INSERT INTO `schedules` (`id`, `name`, `start_time_mili`, `end_time_mili`, `setup_time_mili`, `event_id`) VALUES (?, ?, ?, ?, ?, ?)", schedule.ID, schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID)
+	tx, err := r.db.Begin()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+	defer tx.Rollback()
+
+	query := "INSERT INTO `schedules` (`id`, `name`, `start_time_mili`, `end_time_mili`, `setup_time_mili`, `event_id`) VALUES (?, ?, ?, ?, ?, ?)"
+	_, err = tx.Exec(query, schedule.ID, schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -303,11 +311,34 @@ func (r *ScheduleSqlite) Save(schedule *internal.Schedule) (err error) {
 		}
 	}
 
+	query = "UPDATE `events` SET `schedule_id` = ? WHERE `id` = ?;"
+	_, err = tx.Exec(query, schedule.ID, schedule.EventID)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			return
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+
 	return
 }
 
 func (r *ScheduleSqlite) Update(schedule *internal.Schedule) (err error) {
-	_, err = r.db.Exec("UPDATE `schedules` SET `name` = ?, `start_time_mili` = ?, `end_time_mili` = ?, `setup_time_mili` = ?, `event_id` = ? WHERE `id` = ?;", schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID, schedule.ID)
+	tx, err := r.db.Begin()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+	defer tx.Rollback()
+
+	query := "UPDATE `schedules` SET `name` = ?, `start_time_mili` = ?, `end_time_mili` = ?, `setup_time_mili` = ?, `event_id` = ? WHERE `id` = ?;"
+	_, err = r.db.Exec(query, schedule.Name, schedule.Start_time_mili, schedule.End_time_mili, schedule.Setup_time_mili, schedule.EventID, schedule.ID)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -320,6 +351,21 @@ func (r *ScheduleSqlite) Update(schedule *internal.Schedule) (err error) {
 			logger.Log.Error(err.Error())
 			return
 		}
+	}
+
+	query = "UPDATE `events` SET `schedule_id` = ? WHERE `id` = ?;"
+	_, err = tx.Exec(query, schedule.ID, schedule.EventID)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			return
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
 	}
 
 	return
