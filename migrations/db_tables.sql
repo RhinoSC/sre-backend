@@ -21,7 +21,8 @@ CREATE TABLE events (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     start_time_mili NUMERIC NOT NULL,
-    end_time_mili NUMERIC NOT NULL
+    end_time_mili NUMERIC NOT NULL,
+    schedule_id VARCHAR(255)
 );
 
 -- Migration for creating the 'schedules' table

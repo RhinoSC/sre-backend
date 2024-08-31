@@ -7,6 +7,16 @@ type Event struct {
 	Name            string
 	Start_time_mili int64
 	End_time_mili   int64
+	Schedule_id     string
+}
+
+type EventInfoCount struct {
+	Schedules_count int64
+	Runs_count      int64
+	Prizes_count    int64
+	Bids_count      int64
+	Donations_count int64
+	Users_count     int64
 }
 
 var (
@@ -29,6 +39,8 @@ type EventRepository interface {
 	Update(event *Event) error
 
 	Delete(id string) error
+
+	GetBasicInfo() (EventInfoCount, error)
 }
 
 type EventService interface {
@@ -41,4 +53,6 @@ type EventService interface {
 	Update(event *Event) error
 
 	Delete(id string) error
+
+	GetBasicInfo() (EventInfoCount, error)
 }

@@ -1,6 +1,6 @@
 -- Insertar datos en la tabla 'events'
-INSERT INTO events (id, name, start_time_mili, end_time_mili) VALUES
-('event1', 'Charity Marathon', 1677830400000, 1677916800000);
+INSERT INTO events (id, name, start_time_mili, end_time_mili, schedule_id) VALUES
+('event1', 'Charity Marathon', 1677830400000, 1677916800000, "schedule1");
 
 -- Insertar datos en la tabla 'schedules'
 INSERT INTO schedules (id, name, start_time_mili, end_time_mili, setup_time_mili, event_id) VALUES

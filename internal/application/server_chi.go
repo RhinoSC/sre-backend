@@ -80,11 +80,6 @@ func (s *ServerChi) Run() (err error) {
 
 	// initilize twitch
 	service.CreateFirstTime(&twitch)
-	// twitch.ClientToken, err = twitchService.GetToken()
-	// if err != nil {
-	// 	logger.Log.Error("Could get token from Twitch")
-	// }
-	// logger.Log.Info("Twitch token: ", twitch.ClientToken)
 
 	// Initialize JWT Auth
 	auth.Init(s.jwtSecret)
@@ -92,9 +87,8 @@ func (s *ServerChi) Run() (err error) {
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		// AllowedOrigins:   []string{"https://speedrunespanol.com", "https://speedrunespanol.com", "https://*.speedrunespanol.com","http://*.speedrunespanol.com"},
+		AllowedOrigins:   []string{"https://", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -112,13 +106,13 @@ func (s *ServerChi) Run() (err error) {
 
 		r.With(auth.Authenticator()).Group(func(rt chi.Router) {
 			buildUserRouter(&rt, db)
-			buildEventRouter(&rt, db)
 			buildPrizeRouter(&rt, db)
 			buildTeamRouter(&rt, db)
 		})
 
 		// Algunas rutas privadas y otras publicas
 		r.Group(func(r chi.Router) {
+			buildEventRouter(&r, db)
 			buildAdminRouter(&r, db)
 			buildScheduleRouter(&r, db)
 			buildRunRouter(&r, db)
@@ -174,11 +168,18 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewEventDefault(sv)
 
 	(*router).Route("/events", func(rt chi.Router) {
-		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetByID())
-		rt.Post("/", hd.Create())
-		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		// Public
+		rt.Get("/info", hd.GetBasicInfo())
+
+		// Private
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Get("/", hd.GetAll())
+			r.Get("/{id}", hd.GetByID())
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
 

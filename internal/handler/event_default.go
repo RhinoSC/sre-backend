@@ -18,12 +18,23 @@ type EventAsJSON struct {
 	Name            string `json:"name"`
 	Start_time_mili int64  `json:"start_time_mili"`
 	End_time_mili   int64  `json:"end_time_mili"`
+	Schedule_id     string `json:"schedule_id"`
 }
 
 type EventAsBodyJSON struct {
 	Name            string `json:"name" validate:"required"`
 	Start_time_mili int64  `json:"start_time_mili" validate:"required"`
 	End_time_mili   int64  `json:"end_time_mili" validate:"required"`
+	Schedule_id     string `json:"schedule_id"`
+}
+
+type EventInfoCountAsJSON struct {
+	Schedules_count int64 `json:"schedules"`
+	Runs_count      int64 `json:"runs"`
+	Prizes_count    int64 `json:"prizes"`
+	Bids_count      int64 `json:"bids"`
+	Donations_count int64 `json:"donations"`
+	Users_count     int64 `json:"users"`
 }
 
 type EventDefault struct {
@@ -57,6 +68,7 @@ func (h *EventDefault) GetAll() http.HandlerFunc {
 				Name:            event.Name,
 				Start_time_mili: event.Start_time_mili,
 				End_time_mili:   event.End_time_mili,
+				Schedule_id:     event.Schedule_id,
 			}
 		}
 
@@ -93,6 +105,7 @@ func (h *EventDefault) GetByID() http.HandlerFunc {
 			Name:            event.Name,
 			Start_time_mili: event.Start_time_mili,
 			End_time_mili:   event.End_time_mili,
+			Schedule_id:     event.Schedule_id,
 		}
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
@@ -139,6 +152,7 @@ func (h *EventDefault) Create() http.HandlerFunc {
 			Name:            body.Name,
 			Start_time_mili: body.Start_time_mili,
 			End_time_mili:   body.End_time_mili,
+			Schedule_id:     body.Schedule_id,
 		}
 
 		err = h.sv.Save(&event)
@@ -159,6 +173,7 @@ func (h *EventDefault) Create() http.HandlerFunc {
 			Name:            event.Name,
 			Start_time_mili: event.Start_time_mili,
 			End_time_mili:   event.End_time_mili,
+			Schedule_id:     event.Schedule_id,
 		}
 
 		util.ResponseJSON(w, http.StatusCreated, map[string]any{
@@ -194,6 +209,7 @@ func (h *EventDefault) Update() http.HandlerFunc {
 			Name:            event.Name,
 			Start_time_mili: event.Start_time_mili,
 			End_time_mili:   event.End_time_mili,
+			Schedule_id:     event.Schedule_id,
 		}
 
 		if err := util.RequestJSON(r, &eventBody); err != nil {
@@ -206,6 +222,7 @@ func (h *EventDefault) Update() http.HandlerFunc {
 			Name:            eventBody.Name,
 			Start_time_mili: eventBody.Start_time_mili,
 			End_time_mili:   eventBody.End_time_mili,
+			Schedule_id:     eventBody.Schedule_id,
 		}
 
 		err = h.sv.Update(&event)
@@ -226,6 +243,7 @@ func (h *EventDefault) Update() http.HandlerFunc {
 			Name:            event.Name,
 			Start_time_mili: event.Start_time_mili,
 			End_time_mili:   event.End_time_mili,
+			Schedule_id:     event.Schedule_id,
 		}
 
 		util.ResponseJSON(w, http.StatusOK, map[string]any{
@@ -259,5 +277,36 @@ func (h *EventDefault) Delete() http.HandlerFunc {
 		// response
 
 		util.ResponseJSON(w, http.StatusNoContent, map[string]any{})
+	}
+}
+
+func (h *EventDefault) GetBasicInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+		// process
+
+		count, err := h.sv.GetBasicInfo()
+		if err != nil {
+			switch {
+			default:
+				util.ResponseError(w, http.StatusInternalServerError, "Internal server error")
+			}
+			return
+		}
+
+		data := EventInfoCountAsJSON{
+			Schedules_count: count.Schedules_count,
+			Runs_count:      count.Runs_count,
+			Prizes_count:    count.Prizes_count,
+			Bids_count:      count.Bids_count,
+			Donations_count: count.Donations_count,
+			Users_count:     count.Users_count,
+		}
+		// response
+
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
 	}
 }

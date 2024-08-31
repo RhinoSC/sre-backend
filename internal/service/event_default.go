@@ -82,3 +82,15 @@ func (s *EventDefault) Delete(id string) (err error) {
 	}
 	return
 }
+
+func (s *EventDefault) GetBasicInfo() (count internal.EventInfoCount, err error) {
+	count, err = s.rp.GetBasicInfo()
+	if err != nil {
+		switch {
+		default:
+			err = fmt.Errorf("error finding event info: %w", err)
+		}
+		return
+	}
+	return
+}
