@@ -106,12 +106,12 @@ func (s *ServerChi) Run() (err error) {
 
 		r.With(auth.Authenticator()).Group(func(rt chi.Router) {
 			buildUserRouter(&rt, db)
-			buildPrizeRouter(&rt, db)
 			buildTeamRouter(&rt, db)
 		})
 
 		// Algunas rutas privadas y otras publicas
 		r.Group(func(r chi.Router) {
+			buildPrizeRouter(&r, db)
 			buildEventRouter(&r, db)
 			buildAdminRouter(&r, db)
 			buildScheduleRouter(&r, db)
@@ -171,11 +171,11 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 
 		// Public
 		rt.Get("/info", hd.GetBasicInfo())
+		rt.Get("/{id}", hd.GetByID())
 
 		// Private
 		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
 			r.Get("/", hd.GetAll())
-			r.Get("/{id}", hd.GetByID())
 			r.Post("/", hd.Create())
 			r.Patch("/{id}", hd.Update())
 			r.Delete("/{id}", hd.Delete())
@@ -189,11 +189,17 @@ func buildPrizeRouter(router *chi.Router, db *sql.DB) {
 	hd := handler.NewPrizeDefault(sv)
 
 	(*router).Route("/prizes", func(rt chi.Router) {
+
+		// public
 		rt.Get("/", hd.GetAll())
-		rt.Get("/{id}", hd.GetByID())
-		rt.Post("/", hd.Create())
-		rt.Patch("/{id}", hd.Update())
-		rt.Delete("/{id}", hd.Delete())
+
+		// private
+		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
+			r.Get("/{id}", hd.GetByID())
+			r.Post("/", hd.Create())
+			r.Patch("/{id}", hd.Update())
+			r.Delete("/{id}", hd.Delete())
+		})
 	})
 }
 
