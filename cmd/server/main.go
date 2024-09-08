@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/RhinoSC/sre-backend/internal/application"
 )
@@ -10,7 +11,8 @@ func main() {
 	port := 8080
 	portS := fmt.Sprintf(":%d", port)
 	cfg := application.ConfigServerChi{
-		Address: portS,
+		Address:   portS,
+		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 	server := application.NewServerChi(cfg)
 
