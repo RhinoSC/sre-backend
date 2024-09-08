@@ -2,15 +2,14 @@ package application
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/httprate"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/RhinoSC/sre-backend/internal"
@@ -80,6 +79,7 @@ func (s *ServerChi) Run() (err error) {
 
 	// initilize twitch
 	service.CreateFirstTime(&twitch)
+	fmt.Println("token: ", twitch.ClientToken)
 
 	// Initialize JWT Auth
 	auth.Init(s.jwtSecret)
@@ -239,18 +239,18 @@ func buildRunRouter(router *chi.Router, db *sql.DB) {
 			r.Post("/order", hd.UpdateRunOrder())
 
 			// Twitch
-			r.Group(func(r chi.Router) {
-				r.Use(httprate.Limit(13, time.Minute, httprate.WithResponseHeaders(httprate.ResponseHeaders{
-					Limit:      "X-RateLimit-Limit",
-					Remaining:  "X-RateLimit-Remaining",
-					Reset:      "X-RateLimit-Reset",
-					RetryAfter: "Retry-After",
-				}), httprate.WithKeyFuncs(
-					httprate.KeyByEndpoint,
-				)))
-				r.Get("/twitch/categories", hd.FindTwitchCategories())
-				r.Get("/twitch/game", hd.FindTwitchCategoryByID())
-			})
+			// r.Group(func(r chi.Router) {
+			// 	r.Use(httprate.Limit(13, time.Minute, httprate.WithResponseHeaders(httprate.ResponseHeaders{
+			// 		Limit:      "X-RateLimit-Limit",
+			// 		Remaining:  "X-RateLimit-Remaining",
+			// 		Reset:      "X-RateLimit-Reset",
+			// 		RetryAfter: "Retry-After",
+			// 	}), httprate.WithKeyFuncs(
+			// 		httprate.KeyByEndpoint,
+			// 	)))
+			r.Get("/twitch/categories", hd.FindTwitchCategories())
+			r.Get("/twitch/game", hd.FindTwitchCategoryByID())
+			// })
 		})
 	})
 }
