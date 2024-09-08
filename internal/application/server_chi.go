@@ -79,6 +79,7 @@ func (s *ServerChi) Run() (err error) {
 
 	// initilize twitch
 	service.CreateFirstTime(&twitch)
+	twitch.ClientToken, err = service.GetTwitchInstance().GetToken()
 	fmt.Println("token: ", twitch.ClientToken)
 
 	// Initialize JWT Auth
