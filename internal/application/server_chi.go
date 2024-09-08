@@ -171,10 +171,6 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 
 	(*router).Route("/events", func(rt chi.Router) {
 
-		// Public
-		rt.Get("/info", hd.GetBasicInfo())
-		rt.Get("/{id}", hd.GetByID())
-
 		// Private
 		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
 			r.Get("/", hd.GetAll())
@@ -182,6 +178,10 @@ func buildEventRouter(router *chi.Router, db *sql.DB) {
 			r.Patch("/{id}", hd.Update())
 			r.Delete("/{id}", hd.Delete())
 		})
+
+		// Public
+		rt.Get("/info", hd.GetBasicInfo())
+		rt.Get("/{id}", hd.GetByID())
 	})
 }
 
