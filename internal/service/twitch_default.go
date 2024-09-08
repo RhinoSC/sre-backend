@@ -70,7 +70,6 @@ func (t *TwitchDefault) FindCategories(name string) (categories []internal.Twitc
 	req.Header.Add("Client-Id", t.ClientID)
 	req.Header.Add("Authorization", "Bearer "+t.ClientToken)
 
-	fmt.Println(req)
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
