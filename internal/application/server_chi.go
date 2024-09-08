@@ -88,7 +88,8 @@ func (s *ServerChi) Run() (err error) {
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://speedrunespanol.com", "https://*.speedrunespanol.com", "http://localhost:8080", "http://localhost:8081", "http://localhost:3000", "http://localhost:4000"},
+		// AllowedOrigins:   []string{"https://speedrunespanol.com", "https://*.speedrunespanol.com", "http://localhost:8080", "http://localhost:8081", "http://localhost:3000", "http://localhost:4000"},
+		AllowedOrigins:   []string{"https://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
