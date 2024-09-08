@@ -302,6 +302,7 @@ func buildDonationRouter(router *chi.Router, db *sql.DB) {
 		rt.Get("/{id}", hd.GetByID())
 		rt.Get("/event/{id}", hd.GetByEventID())
 		rt.Post("/", hd.Create())
+		rt.Get("/event/total/{id}", hd.GetTotalDonatedByEventID())
 
 		rt.With(auth.Authenticator()).Group(func(r chi.Router) {
 			rt.Patch("/{id}", hd.Update())

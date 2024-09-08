@@ -91,6 +91,18 @@ func (s *DonationDefault) FindByEventIDWithBidDetails(id string) (donations []in
 	return
 }
 
+func (s *DonationDefault) FindTotalDonatedByEventID(id string) (totalAmount float64, err error) {
+	totalAmount, err = s.rp.FindTotalDonatedByEventID(id)
+	if err != nil {
+		switch {
+		default:
+			err = fmt.Errorf("error finding total donation by event id: %w", err)
+		}
+		return
+	}
+	return
+}
+
 func (s *DonationDefault) Save(donation *internal.DonationWithBidDetails) (err error) {
 	err = s.rp.Save(donation)
 	if err != nil {

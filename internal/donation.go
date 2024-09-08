@@ -80,6 +80,8 @@ type DonationRepository interface {
 
 	FindByEventIDWithBidDetails(id string) ([]DonationWithBidDetails, error)
 
+	FindTotalDonatedByEventID(id string) (float64, error)
+
 	Save(donation *DonationWithBidDetails) error
 
 	Update(donation *DonationWithBidDetails) error
@@ -99,6 +101,8 @@ type DonationService interface {
 	FindByEventID(id string) ([]Donation, error)
 
 	FindByEventIDWithBidDetails(id string) ([]DonationWithBidDetails, error)
+
+	FindTotalDonatedByEventID(id string) (float64, error)
 
 	Save(donation *DonationWithBidDetails) error
 

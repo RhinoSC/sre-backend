@@ -168,6 +168,17 @@ func (r *DonationSqlite) FindByEventIDWithBidDetails(id string) (donations []int
 	return
 }
 
+func (r *DonationSqlite) FindTotalDonatedByEventID(id string) (totalAmount float64, err error) {
+
+	err = r.db.QueryRow("SELECT SUM(d.amount) FROM `donations` AS `d` WHERE d.`event_id` = ?;", id).Scan(&totalAmount)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+
+	return
+}
+
 func (r *DonationSqlite) Save(donation *internal.DonationWithBidDetails) (err error) {
 	tx, err := r.db.Begin()
 	defer tx.Rollback()

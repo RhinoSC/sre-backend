@@ -142,6 +142,32 @@ func (h *DonationDefault) GetByEventID() http.HandlerFunc {
 	}
 }
 
+func (h *DonationDefault) GetTotalDonatedByEventID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// request
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			util.ResponseError(w, http.StatusBadRequest, "Invalid ID")
+			return
+		}
+
+		// process
+
+		totalAmount, err := h.sv.FindTotalDonatedByEventID(id)
+		if err != nil {
+			util.ResponseError(w, http.StatusNotFound, "Donations not found")
+			return
+		}
+
+		// response
+
+		util.ResponseJSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    totalAmount,
+		})
+	}
+}
+
 func (h *DonationDefault) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// request
@@ -175,9 +201,18 @@ func (h *DonationDefault) Create() http.HandlerFunc {
 			return
 		}
 
+		var donationBidDetails internal.DonationBidDetails
 		// Crear nuevo bidOption
-		if body.BidDetails.CreateNewOptions && body.BidDetails.OptionID == "" && body.BidDetails.OptionName != "" {
-			body.BidDetails.OptionID = uuid.NewString()
+		if *body.ToBid {
+			if body.BidDetails.CreateNewOptions && body.BidDetails.OptionID == "" && body.BidDetails.OptionName != "" {
+				body.BidDetails.OptionID = uuid.NewString()
+			}
+
+			donationBidDetails = internal.DonationBidDetails{
+				BidID:      body.BidDetails.BidID,
+				OptionID:   body.BidDetails.OptionID,
+				OptionName: body.BidDetails.OptionName,
+			}
 		}
 		donation := internal.DonationWithBidDetails{
 			Donation: internal.Donation{
@@ -190,11 +225,7 @@ func (h *DonationDefault) Create() http.HandlerFunc {
 				ToBid:       *body.ToBid,
 				EventID:     body.EventID,
 			},
-			BidDetails: &internal.DonationBidDetails{
-				BidID:      body.BidDetails.BidID,
-				OptionID:   body.BidDetails.OptionID,
-				OptionName: body.BidDetails.OptionName,
-			},
+			BidDetails: &donationBidDetails,
 		}
 
 		err = h.sv.Save(&donation)
