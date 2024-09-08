@@ -318,3 +318,12 @@ func (h *AdminDefault) Login() http.HandlerFunc {
 		})
 	}
 }
+
+func (h *AdminDefault) ValidateToken() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		util.ResponseJSON(w, http.StatusCreated, map[string]any{
+			"message": "success",
+			"data":    "ok",
+		})
+	}
+}

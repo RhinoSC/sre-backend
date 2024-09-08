@@ -144,6 +144,8 @@ func buildAdminRouter(router *chi.Router, db *sql.DB) {
 			r.Post("/", hd.Create())
 			r.Patch("/{id}", hd.Update())
 			r.Delete("/{id}", hd.Delete())
+
+			r.Get("/validate", hd.ValidateToken())
 		})
 	})
 }
