@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 
 	"github.com/RhinoSC/sre-backend/internal"
 	"github.com/RhinoSC/sre-backend/internal/handler/util"
@@ -13,6 +14,13 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
+
+// Define un tipo que implementa sort.Interface basado en start_time_mili
+type ByStartTimeMili []run_helper.RunAsJSON
+
+func (a ByStartTimeMili) Len() int           { return len(a) }
+func (a ByStartTimeMili) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStartTimeMili) Less(i, j int) bool { return a[i].StartTimeMili < a[j].StartTimeMili }
 
 type ScheduleRunsJoinedAsJSON struct {
 	ID              string   `json:"id"`
@@ -141,6 +149,8 @@ func (h *ScheduleDefault) GetByID() http.HandlerFunc {
 			runJSON := run_helper.ConvertRunToJSON(run, "")
 			orderedRunsAsJSON = append(orderedRunsAsJSON, runJSON)
 		}
+
+		sort.Sort(ByStartTimeMili(orderedRunsAsJSON))
 
 		// response
 		data := ScheduleAsJSON{
