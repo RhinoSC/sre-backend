@@ -107,7 +107,7 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 		bo.id AS bid_option_id, bo.name AS bid_option_name, bo.current_amount AS bid_option_current_amount
 	FROM 
 		runs AS r
-		JOIN  run_metadata AS rm ON r.id = rm.run_id
+		JOIN run_metadata AS rm ON r.id = rm.run_id
 		LEFT JOIN teams AS t ON t.run_id = r.id
 		LEFT JOIN players AS pl ON t.id = pl.team_id
 		LEFT JOIN users AS u ON pl.user_id = u.id
@@ -123,8 +123,6 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	}
 	defer rows.Close()
 
-	var teams []internal.RunTeams
-	var bidsMap = make(map[string]*internal.Bid)
 	var runs = make(map[string]internal.Run)
 
 	for rows.Next() {
@@ -148,10 +146,15 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 			return
 		}
 
-		// Inicializar variables para una nueva run si es necesario
+		// Inicializar la run si no existe aún
 		if _, exists := runs[run.ID]; !exists {
-			teams = []internal.RunTeams{}
+			run.Teams = []internal.RunTeams{}
+			run.Bids = []internal.Bid{}
+			runs[run.ID] = run
 		}
+
+		// Referencia a la run actual en el mapa
+		currentRun := runs[run.ID]
 
 		// Procesar equipos y jugadores
 		if teamID.Valid {
@@ -176,36 +179,62 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 			}
 
 			teamFound := false
-			for i := range teams {
-				if teams[i].ID == team.ID {
-					// Mapa para evitar jugadores duplicados
-					existingPlayers := make(map[string]bool)
-					for _, player := range teams[i].Players {
-						existingPlayers[player.UserID] = true
-					}
-
-					// Añadir nuevos jugadores solo si no están ya en el equipo
+			for i := range currentRun.Teams {
+				if currentRun.Teams[i].ID == team.ID {
+					// Añadir jugadores solo si no existen
 					for _, newPlayer := range team.Players {
-						if !existingPlayers[newPlayer.UserID] {
-							teams[i].Players = append(teams[i].Players, newPlayer)
-							existingPlayers[newPlayer.UserID] = true
+						exists := false
+						for _, existingPlayer := range currentRun.Teams[i].Players {
+							if existingPlayer.UserID == newPlayer.UserID {
+								exists = true
+								break
+							}
+						}
+						if !exists {
+							currentRun.Teams[i].Players = append(currentRun.Teams[i].Players, newPlayer)
 						}
 					}
-
 					teamFound = true
 					break
 				}
 			}
 			if !teamFound {
-				teams = append(teams, team)
+				currentRun.Teams = append(currentRun.Teams, team)
 			}
 		}
 
 		// Procesar bids y bid_options
 		if bidID.Valid {
-			bid, exists := bidsMap[bidID.String]
-			if !exists {
-				bid = &internal.Bid{
+			bidExists := false
+			for i := range currentRun.Bids {
+				if currentRun.Bids[i].ID == bidID.String {
+					bidExists = true
+
+					// Añadir bid_options si no existen
+					if bidOptionID.Valid {
+						optionExists := false
+						for _, option := range currentRun.Bids[i].BidOptions {
+							if option.ID == bidOptionID.String {
+								optionExists = true
+								break
+							}
+						}
+						if !optionExists {
+							currentRun.Bids[i].BidOptions = append(currentRun.Bids[i].BidOptions, internal.BidOptions{
+								ID:            bidOptionID.String,
+								Name:          bidOptionName.String,
+								CurrentAmount: bidOptionCurrentAmount.Float64,
+								BidID:         bidID.String,
+							})
+						}
+					}
+					break
+				}
+			}
+
+			// Si el bid no existe, lo creamos
+			if !bidExists {
+				newBid := internal.Bid{
 					ID:               bidID.String,
 					Bidname:          bidName.String,
 					Goal:             bidGoal.Float64,
@@ -216,49 +245,22 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 					RunID:            run.ID,
 					BidOptions:       []internal.BidOptions{},
 				}
-				bidsMap[bidID.String] = bid
-			}
 
-			if bidOptionID.Valid {
-				optionAlreadyExists := false
-				for _, option := range bid.BidOptions {
-					if option.ID == bidOptionID.String {
-						optionAlreadyExists = true
-						break
-					}
-				}
-				if !optionAlreadyExists {
-					option := internal.BidOptions{
+				if bidOptionID.Valid {
+					newBid.BidOptions = append(newBid.BidOptions, internal.BidOptions{
 						ID:            bidOptionID.String,
 						Name:          bidOptionName.String,
 						CurrentAmount: bidOptionCurrentAmount.Float64,
 						BidID:         bidID.String,
-					}
-					bid.BidOptions = append(bid.BidOptions, option)
+					})
 				}
+
+				currentRun.Bids = append(currentRun.Bids, newBid)
 			}
 		}
 
-		// Agregar bids a la lista de runs
-		if run.ID != "" {
-			if runData, exists := runs[run.ID]; exists {
-				// Reemplaza la run existente
-				runData.Teams = teams
-				runData.Bids = make([]internal.Bid, 0, len(bidsMap))
-				for _, bid := range bidsMap {
-					runData.Bids = append(runData.Bids, *bid)
-				}
-				runs[run.ID] = runData
-			} else {
-				// Agrega una nueva run
-				run.Teams = teams
-				run.Bids = make([]internal.Bid, 0, len(bidsMap))
-				for _, bid := range bidsMap {
-					run.Bids = append(run.Bids, *bid)
-				}
-				runs[run.ID] = run
-			}
-		}
+		// Actualizar la run en el mapa
+		runs[run.ID] = currentRun
 	}
 
 	if err = rows.Err(); err != nil {
@@ -271,20 +273,17 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	var backupRuns []internal.Run
 
 	for _, run := range runs {
-		switch run.Status {
-		case "active":
-			orderedRuns = append(orderedRuns, run)
-		case "backup":
-			backupRuns = append(backupRuns, run)
-		default:
-			availableRuns = append(availableRuns, run)
-		}
+		availableRuns = append(availableRuns, run)
+		orderedRuns = append(orderedRuns, run)
+		// Por ahora los backupRuns se pueden manejar igual
+		backupRuns = append(backupRuns, run)
 	}
 
-	schedule.Runs = append(schedule.Runs, availableRuns...)
-	schedule.OrderedRuns = append(schedule.OrderedRuns, orderedRuns...)
-	schedule.BackupRuns = append(schedule.BackupRuns, backupRuns...)
-	return
+	schedule.Runs = availableRuns
+	schedule.OrderedRuns = orderedRuns
+	schedule.BackupRuns = backupRuns
+
+	return schedule, nil
 }
 
 func (r *ScheduleSqlite) Save(schedule *internal.Schedule) (err error) {
