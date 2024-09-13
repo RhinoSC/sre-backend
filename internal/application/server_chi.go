@@ -2,7 +2,6 @@ package application
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -81,8 +80,9 @@ func (s *ServerChi) Run() (err error) {
 
 	// initilize twitch
 	service.CreateFirstTime(&twitch)
-	token, err := service.GetTwitchInstance().GetToken()
-	fmt.Println(token)
+	service.CreateLayoutFirstTime(os.Getenv("LAYOUT_URL"))
+	// token, err := service.GetTwitchInstance().GetToken()
+	// fmt.Println(token)
 
 	// Initialize JWT Auth
 	auth.Init(s.jwtSecret)

@@ -9,11 +9,14 @@ import (
 
 type DonationDefault struct {
 	rp internal.DonationRepository
+	ls *LayoutDefault
 }
 
 func NewDonationDefault(rp internal.DonationRepository) *DonationDefault {
+	ls := GetLayoutInstance()
 	return &DonationDefault{
 		rp: rp,
+		ls: ls,
 	}
 }
 
@@ -115,6 +118,10 @@ func (s *DonationDefault) Save(donation *internal.DonationWithBidDetails) (err e
 		return
 	}
 
+	err1 := s.ls.NotifyTotalDonated()
+	if err1 != nil {
+		fmt.Println("error notifying layout")
+	}
 	return
 }
 
@@ -128,6 +135,11 @@ func (s *DonationDefault) Update(donation *internal.DonationWithBidDetails) (err
 			err = fmt.Errorf("error updating donation: %w", err)
 		}
 		return
+	}
+
+	err1 := s.ls.NotifyTotalDonated()
+	if err1 != nil {
+		fmt.Println("error notifying layout")
 	}
 	return
 }
