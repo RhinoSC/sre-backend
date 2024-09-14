@@ -273,10 +273,13 @@ func (r *ScheduleSqlite) FindById(id string) (schedule internal.Schedule, err er
 	var backupRuns []internal.Run
 
 	for _, run := range runs {
-		availableRuns = append(availableRuns, run)
-		orderedRuns = append(orderedRuns, run)
-		// Por ahora los backupRuns se pueden manejar igual
-		backupRuns = append(backupRuns, run)
+		if run.Status == "active" {
+			orderedRuns = append(orderedRuns, run)
+		} else if run.Status == "backup" {
+			backupRuns = append(backupRuns, run)
+		} else {
+			availableRuns = append(availableRuns, run)
+		}
 	}
 
 	schedule.Runs = availableRuns

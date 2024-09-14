@@ -32,7 +32,7 @@ func main() {
 
 	var test_data = func() {
 		// Leer el archivo de migración
-		migration, err := os.ReadFile("./migrations/seed_srex.sql")
+		migration, err := os.ReadFile("./migrations/seed_srex_runs.sql")
 		if err != nil {
 			log.Fatal(err)
 		}
