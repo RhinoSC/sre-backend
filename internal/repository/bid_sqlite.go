@@ -177,32 +177,30 @@ func (r *BidSqlite) Update(bid *internal.Bid) (err error) {
 		}
 	}
 
-	if bid.Type != internal.Bidwar {
-		deleteBidOptionsQuery := "DELETE FROM `bid_options` WHERE bid_id = ?;"
+	deleteBidOptionsQuery := "DELETE FROM `bid_options` WHERE bid_id = ?;"
 
-		_, err = tx.Exec(deleteBidOptionsQuery, bid.ID)
+	_, err = tx.Exec(deleteBidOptionsQuery, bid.ID)
+	if err != nil {
+		tx.Rollback()
+		logger.Log.Error(err.Error())
+	}
+
+	query := "INSERT INTO `bid_options` (`id`, `bid_id`, `name`, `current_amount`) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET `name` = excluded.name, `current_amount` = excluded.current_amount"
+
+	for _, option := range bid.BidOptions {
+		_, err = tx.Exec(query, option.ID, option.BidID, option.Name, option.CurrentAmount)
 		if err != nil {
 			tx.Rollback()
-			logger.Log.Error(err.Error())
-		}
-	} else {
-		query := "INSERT INTO `bid_options` (`id`, `bid_id`, `name`, `current_amount`) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET `name` = excluded.name, `current_amount` = excluded.current_amount"
-
-		for _, option := range bid.BidOptions {
-			_, err = tx.Exec(query, option.ID, option.BidID, option.Name, option.CurrentAmount)
-			if err != nil {
-				tx.Rollback()
-				var sqliteErr sqlite3.Error
-				if errors.As(err, &sqliteErr) {
-					switch sqliteErr.ExtendedCode {
-					case sqlite3.ErrConstraintUnique:
-						err = internal.ErrBidRepositoryDuplicated
-					default:
-						err = internal.ErrBidDatabase
-					}
-					logger.Log.Error(err.Error())
-					return
+			var sqliteErr sqlite3.Error
+			if errors.As(err, &sqliteErr) {
+				switch sqliteErr.ExtendedCode {
+				case sqlite3.ErrConstraintUnique:
+					err = internal.ErrBidRepositoryDuplicated
+				default:
+					err = internal.ErrBidDatabase
 				}
+				logger.Log.Error(err.Error())
+				return
 			}
 		}
 	}

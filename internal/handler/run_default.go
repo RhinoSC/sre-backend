@@ -299,11 +299,6 @@ func (h *RunDefault) Update() http.HandlerFunc {
 			}
 
 			for j, optionBody := range bidBody.BidOptions {
-				// Verificar si createOptions es falso y el ID de la opción es una cadena vacía
-				if !bid.CreateNewOptions && optionBody.ID == "" {
-					continue
-				}
-
 				bidOptionID := optionBody.ID
 				if optionBody.ID == "" {
 					bidOptionID = uuid.NewString()

@@ -638,11 +638,15 @@ func (r *RunSqlite) Update(run *internal.Run) (err error) {
 			}
 		}
 
+		deleteBidOptionsQuery := "DELETE FROM `bid_options` WHERE bid_id = ?;"
+
+		_, err = tx.Exec(deleteBidOptionsQuery, bid.ID)
+		if err != nil {
+			tx.Rollback()
+			logger.Log.Error(err.Error())
+		}
+
 		for _, option := range bid.BidOptions {
-			// Verificar si createOptions es falso y el ID de la opción es una cadena vacía
-			if !bid.CreateNewOptions && option.ID == "" {
-				continue
-			}
 			_, err = tx.Exec("INSERT INTO bid_options (id, bid_id, name, current_amount) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, current_amount = excluded.current_amount;", option.ID, bid.ID, option.Name, option.CurrentAmount)
 			if err != nil {
 				var sqliteErr sqlite3.Error
