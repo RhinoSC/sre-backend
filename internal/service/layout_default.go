@@ -23,11 +23,13 @@ func GetLayoutInstance() *LayoutDefault {
 	return layoutInstance
 }
 
-func (l *LayoutDefault) NotifyTotalDonated() (err error) {
+func (l *LayoutDefault) NotifyTotalDonated(bidID string) (err error) {
 	url := l.url + "/total-donated"
 	method := "POST"
 
-	body := []byte(`{}`)
+	data := fmt.Sprintf(`{"data":"%s", "message":"success"}`, bidID)
+	body := []byte(data)
+	// body := []byte(`{}`)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))

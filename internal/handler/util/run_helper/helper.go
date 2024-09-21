@@ -128,9 +128,12 @@ func ConvertRunToJSON(run internal.Run, details string) (runJSON RunAsJSON) {
 		return
 	} else if details == "bids" {
 		runJSON = RunAsJSON{
-			ID:   run.ID,
-			Name: run.Name,
-			Bids: make([]RunBidsAsJSON, len(run.Bids)),
+			ID:            run.ID,
+			Name:          run.Name,
+			Status:        run.Status,
+			ScheduleId:    run.ScheduleId,
+			StartTimeMili: run.StartTimeMili,
+			Bids:          make([]RunBidsAsJSON, len(run.Bids)),
 		}
 		for i, bid := range run.Bids {
 			bidJSON := RunBidsAsJSON{

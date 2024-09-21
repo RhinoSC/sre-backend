@@ -118,7 +118,7 @@ func (s *DonationDefault) Save(donation *internal.DonationWithBidDetails) (err e
 		return
 	}
 
-	err1 := s.ls.NotifyTotalDonated()
+	err1 := s.ls.NotifyTotalDonated(donation.BidDetails.BidID)
 	if err1 != nil {
 		fmt.Println("error notifying layout")
 	}
@@ -137,7 +137,7 @@ func (s *DonationDefault) Update(donation *internal.DonationWithBidDetails) (err
 		return
 	}
 
-	err1 := s.ls.NotifyTotalDonated()
+	err1 := s.ls.NotifyTotalDonated(donation.NewBidDetails.BidID)
 	if err1 != nil {
 		fmt.Println("error notifying layout")
 	}
